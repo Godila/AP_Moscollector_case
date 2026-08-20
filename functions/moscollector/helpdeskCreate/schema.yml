@@ -1,0 +1,58 @@
+---
+id: helpdeskCreate
+name: helpdeskCreate
+description: >-
+  Создаёт заявку в HelpDeskEddy. Перед созданием сама ищет уже открытые заявки
+  с тем же признаком: если такая есть, новую не создаёт, а возвращает найденную.
+  Вызывай только когда собраны все сведения о проблеме: в какой системе,
+  что делали, что получилось вместо ожидаемого, код ошибки. Недостающее
+  спрашивай у сотрудника до вызова, не придумывай за него.
+response-description: >-
+  При ok=true и duplicate=false заявка создана: назови сотруднику её номер
+  из поля number и срок реакции из поля reaction. При ok=true и duplicate=true
+  заявка не создавалась, потому что нашлась открытая с тем же признаком:
+  назови её номер, скажи, в каком она статусе, и спроси, приложить ли обращение
+  к ней. При ok=false поле reason объясняет причину: not_configured — интеграция
+  не настроена, unauthorized — не приняты учётные данные, rate_limited —
+  превышен лимит запросов, request_failed — сервис ответил ошибкой. Повторять
+  вызов при ошибке нельзя: скажи сотруднику, что заявку создать не удалось,
+  и предложи обратиться в поддержку напрямую.
+parameters:
+  - name: title
+    type: STRING
+    required: true
+    description: >-
+      Короткая тема заявки одной строкой, по сути проблемы. Например
+      "Не открывается АРМ ДС, ошибка E-402".
+  - name: description
+    type: STRING
+    required: true
+    description: >-
+      Описание проблемы: что делал сотрудник, что ожидал получить, что получил
+      фактически, когда началось, повторяется ли. Пиши связным текстом.
+  - name: system
+    type: STRING
+    required: true
+    description: >-
+      Система, в которой возникла проблема. Например "АРМ ДС", "HelpDesk",
+      "DocsVision", "Почта".
+  - name: errorCode
+    type: STRING
+    required: false
+    description: >-
+      Код ошибки, если сотрудник его назвал. Например "E-402". По нему ищутся
+      дубли, поэтому передавай его всегда, когда он известен.
+  - name: categoryId
+    type: STRING
+    required: false
+    description: >-
+      Категория обращения из справочника правил: critical-failure,
+      system-malfunction, access, hardware, consultation, change-request.
+      Выбери подходящую по сути обращения.
+  - name: dbIntegration
+    type: INTEGRATION_DB
+    required: true
+    description: >-
+      Интеграция базы проекта. Выбирается в настройках узла, модель её
+      не заполняет.
+language: JAVASCRIPT
