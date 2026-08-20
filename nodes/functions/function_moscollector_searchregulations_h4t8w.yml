@@ -2,8 +2,8 @@
 id: function_moscollector_searchregulations_h4t8w
 name: moscollector.searchRegulations
 position:
-  x: 968
-  y: 491
+  x: 1094
+  y: 484
 next-step: null
 next-error-step: null
 parameters:
