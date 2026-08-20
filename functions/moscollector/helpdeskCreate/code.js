@@ -142,18 +142,40 @@ function looksLikeEmail(value) {
   return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
-// Какую почту искать в HelpDeskEddy. Справочник - основной источник,
-// fallbackUserEmail - демонстрационная подмена на случай незнакомого
-// собеседника, чтобы показ не спотыкался. В бою её быть не должно.
-function requesterEmail(people, clientId, settings) {
+// Какую почту искать в HelpDeskEddy, в порядке убывания доверия:
+//
+// 1. справочник - собеседник уже привязан к сотруднику;
+// 2. почта, которую сотрудник назвал сам в этом диалоге;
+// 3. fallbackUserEmail - подмена для тестового виджета, где clientId меняется
+//    каждую сессию. По умолчанию выключена: молча приписать заявку чужому
+//    человеку хуже, чем лишний раз спросить.
+function requesterEmail(people, clientId, settings, provided) {
   var person = findPerson(people, clientId);
   if (person && looksLikeEmail(person.email)) {
     return { email: person.email, source: "directory" };
+  }
+  if (looksLikeEmail(provided)) {
+    return { email: String(provided).trim(), source: "asked" };
   }
   if (looksLikeEmail(settings.fallbackUserEmail)) {
     return { email: settings.fallbackUserEmail, source: "fallback" };
   }
   return { email: null, source: "none" };
+}
+
+// Привязка канала к сотруднику. Запоминаем только соответствие "собеседник -
+// почта": ФИО берём из карточки HelpDeskEddy, дублировать его здесь незачем.
+function withPerson(employees, clientId, email, fullName) {
+  var people = Array.isArray(employees.people) ? employees.people : [];
+  var without = people.filter(function (person) {
+    return !person || String(person.clientId) !== String(clientId);
+  });
+  return without.concat([{
+    clientId: String(clientId),
+    email: String(email).trim(),
+    displayName: fullName || null,
+    boundBy: "self"
+  }]);
 }
 
 function fullNameOf(user) {
@@ -283,13 +305,14 @@ async function run(input) {
   var employees = documentValue(employeesDoc) || {};
   var people = Array.isArray(employees.people) ? employees.people : [];
 
-  var identity = requesterEmail(people, clientId, config);
+  var identity = requesterEmail(people, clientId, config, input.requesterEmail);
   if (!identity.email) {
-    await Log.error({
-      message: "Не удалось определить постановщика",
-      data: { clientId: clientId, people: people.length }
-    });
-    return { ok: false, reason: "unknown_requester" };
+    // Не ошибка: сотрудник просто ещё не привязан к этому каналу.
+    return {
+      ok: false,
+      reason: "need_requester_email",
+      question: "Назовите, пожалуйста, вашу рабочую почту — заявка будет оформлена от вашего имени."
+    };
   }
 
   var requester = await lookupUser(config, headers, identity.email);
@@ -303,6 +326,18 @@ async function run(input) {
   }
   if (requester.state !== "ok") {
     return { ok: false, reason: failureReason(requester.status), status: requester.status };
+  }
+
+  // Сотрудник назвался и нашёлся в системе - запоминаем привязку, чтобы
+  // в следующий раз не спрашивать. Записываем только после успешного поиска:
+  // непроверенная почта в справочнике хуже, чем её отсутствие.
+  if (identity.source === "asked" && isFilled(clientId)) {
+    employees.people = withPerson(employees, clientId, requester.email, requester.fullName);
+    await Db.put({ dbIntegration: input.dbIntegration, documentKey: EMPLOYEES_KEY, value: employees });
+    await Log.info({
+      message: "Собеседник привязан к сотруднику",
+      data: { clientId: clientId, email: requester.email }
+    });
   }
 
   // Шаг 1: поиск дублей. Отдельного фильтра "только открытые" без знания ID
@@ -402,6 +437,7 @@ if (typeof module !== "undefined" && module.exports) {
     looksLikeEmail: looksLikeEmail,
     requesterEmail: requesterEmail,
     fullNameOf: fullNameOf,
+    withPerson: withPerson,
     pickUserByEmail: pickUserByEmail,
     readSettings: readSettings,
     failureReason: failureReason
@@ -413,6 +449,7 @@ if (typeof module !== "undefined" && module.exports) {
     system: system,
     errorCode: errorCode,
     categoryId: categoryId,
+    requesterEmail: requesterEmail,
     dbIntegration: dbIntegration
   });
 }

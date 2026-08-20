@@ -32,6 +32,10 @@ parameters:
       type: STRING
       value: null
       filled-ai: true
+    requesterEmail:
+      type: STRING
+      value: null
+      filled-ai: true
     dbIntegration:
       type: INTEGRATION_DB
       value: 1000156248-moscollector-nsn
