@@ -37,5 +37,7 @@ parameters:
       value: 1000156248-moscollector-nsn
       filled-ai: false
   context-config: null
-  hitl-tool-config: null
+  hitl-tool-config:
+    enabled: true
+    approval-question: Создать заявку в HelpDesk по этим данным?
   custom-headers: null
