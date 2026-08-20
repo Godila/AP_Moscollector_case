@@ -1,0 +1,25 @@
+---
+id: function_moscollector_glossarylookup_a7k2m
+name: moscollector.glossaryLookup
+position:
+  x: 528
+  y: 472
+next-step: null
+next-error-step: null
+parameters:
+  type: USER
+  collection: moscollector
+  function: glossaryLookup
+  is-tool: true
+  parameters:
+    term:
+      type: STRING
+      value: null
+      filled-ai: true
+    dbIntegration:
+      type: INTEGRATION_DB
+      value: 1000156248-moscollector-nsn
+      filled-ai: false
+  context-config: null
+  hitl-tool-config: null
+  custom-headers: null

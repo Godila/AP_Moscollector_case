@@ -1,0 +1,25 @@
+---
+id: function_moscollector_navguide_p3x9d
+name: moscollector.navGuide
+position:
+  x: 1328
+  y: 472
+next-step: null
+next-error-step: null
+parameters:
+  type: USER
+  collection: moscollector
+  function: navGuide
+  is-tool: true
+  parameters:
+    request:
+      type: STRING
+      value: null
+      filled-ai: true
+    dbIntegration:
+      type: INTEGRATION_DB
+      value: 1000156248-moscollector-nsn
+      filled-ai: false
+  context-config: null
+  hitl-tool-config: null
+  custom-headers: null
