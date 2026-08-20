@@ -1,0 +1,7 @@
+---
+key: 1000156248-anthropic_claudesonn-nxe
+credential-key: null
+name: ANTHROPIC - claude-sonnet-5
+provider: ANTHROPIC
+model: just-ai/anthropic-claude/claude-sonnet-5
+is-direct-access: false

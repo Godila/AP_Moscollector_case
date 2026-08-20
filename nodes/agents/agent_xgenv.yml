@@ -7,7 +7,7 @@ position:
 next-step: null
 next-error-step: null
 parameters:
-  llm-model-key: 1000156248-deepseek_deepseekv4p-ymw
+  llm-model-key: 1000156248-anthropic_claudesonn-nxe
   llm-model-settings:
     max-tokens: 6000
     temperature: 0.2
@@ -128,7 +128,7 @@ parameters:
       9. Безопасность: никогда не спрашивай пароль, паспортные данные и другие
          сверхконфиденциальные сведения и не принимай их в переписке. Если
          сотрудник прислал такое сам, не повторяй эти данные в ответе.
-    query-override: ""
+    query-override: null
   tools:
   - function_moscollector_searchregulations_h4t8w
   - function_moscollector_glossarylookup_a7k2m
