@@ -1,30 +1,30 @@
 ---
 id: helpdeskStatus
 name: helpdeskStatus
-description: >-
-  Показывает состояние заявок в HelpDeskEddy. Если сотрудник назвал номер
-  заявки — возвращает её состояние, если нет — последние заявки. Вызывай,
-  когда спрашивают «что с моей заявкой», «в каком статусе заявка», «какие
-  у меня заявки».
-response-description: >-
-  При ok=true поле tickets содержит найденные заявки: number — номер, title —
-  тема, status — состояние по-русски, createdAt и updatedAt — даты. Перечисли
-  их сотруднику коротко. Если tickets пуст, заявок не нашлось — так и скажи.
-  При ok=false поле reason объясняет причину: not_configured — интеграция
-  не настроена, unauthorized — не приняты учётные данные, rate_limited —
-  превышен лимит запросов, request_failed — сервис ответил ошибкой.
-  Повторять вызов при ошибке нельзя.
+description: "Показывает состояние заявок в HelpDeskEddy. Если сотрудник назвал но\
+  мер заявки — возвращает её состояние, если нет — последние заявки. Вызывай, когд\
+  а спрашивают «что с моей заявкой», «в каком статусе заявка», «какие у меня заявк\
+  и»."
+response-description: "При ok=true поле tickets содержит найденные заявки: number\
+  \ — номер, title — тема, status — состояние по-русски, createdAt и updatedAt — д\
+  аты. Перечисли их сотруднику коротко. Если tickets пуст, заявок не нашлось — так\
+  \ и скажи. При ok=false поле reason объясняет причину: not_configured — интеграц\
+  ия не настроена, unauthorized — не приняты учётные данные, rate_limited — превыш\
+  ен лимит запросов, request_failed — сервис ответил ошибкой. Повторять вызов при\
+  \ ошибке нельзя."
 parameters:
-  - name: number
-    type: STRING
-    required: false
-    description: >-
-      Номер заявки, если сотрудник его назвал. Например "FCJ-16227".
-      Если номер не назван, оставь пустым — вернутся последние заявки.
-  - name: dbIntegration
-    type: INTEGRATION_DB
-    required: true
-    description: >-
-      Интеграция базы проекта. Выбирается в настройках узла, модель её
-      не заполняет.
+- name: number
+  type: STRING
+  required: false
+  description: "Номер заявки, если сотрудник его назвал. Например \"FCJ-16227\". Е\
+    сли номер не назван, оставь пустым — вернутся последние заявки."
+  properties: null
+  items: null
+- name: dbIntegration
+  type: INTEGRATION_DB
+  required: true
+  description: "Интеграция базы проекта. Выбирается в настройках узла, модель её н\
+    е заполняет."
+  properties: null
+  items: null
 language: JAVASCRIPT
