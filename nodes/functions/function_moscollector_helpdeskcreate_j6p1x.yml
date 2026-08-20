@@ -16,15 +16,23 @@ parameters:
       type: STRING
       value: null
       filled-ai: true
-    description:
-      type: STRING
-      value: null
-      filled-ai: true
     system:
       type: STRING
       value: null
       filled-ai: true
+    whatHappened:
+      type: STRING
+      value: null
+      filled-ai: true
     errorCode:
+      type: STRING
+      value: null
+      filled-ai: true
+    startedAt:
+      type: STRING
+      value: null
+      filled-ai: true
+    repeats:
       type: STRING
       value: null
       filled-ai: true
@@ -36,12 +44,16 @@ parameters:
       type: STRING
       value: null
       filled-ai: true
+    confirmToken:
+      type: STRING
+      value: null
+      filled-ai: true
     dbIntegration:
       type: INTEGRATION_DB
       value: 1000156248-moscollector-nsn
       filled-ai: false
   context-config: null
   hitl-tool-config:
-    enabled: true
+    enabled: false
     approval-question: Создать заявку в HelpDesk по этим данным?
   custom-headers: null

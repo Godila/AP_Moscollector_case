@@ -250,6 +250,71 @@ function buildTicketBody(settings, input, priorityCode, requester) {
   return body;
 }
 
+// ---------- сбор сведений и черновик ----------
+//
+// Состав заявки проверяет функция, а не промт. Указание "спроси недостающее"
+// модель выполняла через раз: получив короткое "не работает DocsVision", она
+// заводила заявку с этой же строкой в описании. Теперь недостающие поля
+// возвращаются списком с готовыми вопросами - тем же приёмом, что и в записке.
+//
+// Подтверждение тоже держится на коде. Функция создаёт заявку только
+// с confirmToken, который сама же выдала вместе с черновиком: не показав
+// сотруднику состав заявки, модель токена не получит, а если после
+// подтверждения перепишет текст - токен перестанет сходиться.
+
+var DETAIL_QUESTIONS = [
+  { name: "system", question: "В какой системе возникла проблема?" },
+  { name: "whatHappened", question: "Что вы делали, что ожидали получить и что получилось вместо этого?" },
+  { name: "errorCode", question: "Какой код ошибки показала система? Если кода нет, так и напишите — «нет»." },
+  { name: "startedAt", question: "Когда это началось?" },
+  { name: "repeats", question: "Повторяется ли это или случилось один раз?" }
+];
+
+var NO_CODE = ["нет", "нету", "без кода", "не было", "не показала", "отсутствует", "-", "—"];
+
+function saysNoCode(value) {
+  return NO_CODE.indexOf(String(value || "").trim().toLowerCase()) !== -1;
+}
+
+// Код ошибки, пригодный для поиска дублей. "нет" - это заполненный ответ,
+// но искать по нему нечего.
+function searchableCode(value) {
+  return isFilled(value) && !saysNoCode(value) ? String(value).trim() : null;
+}
+
+function missingDetails(input) {
+  return DETAIL_QUESTIONS.filter(function (field) {
+    return !isFilled(input[field.name]);
+  });
+}
+
+function composeDescription(input) {
+  var code = searchableCode(input.errorCode);
+  var lines = [
+    "Система: " + String(input.system).trim(),
+    "Код ошибки: " + (code || "не указан"),
+    "",
+    String(input.whatHappened).trim(),
+    "",
+    "Началось: " + String(input.startedAt).trim(),
+    "Повторяемость: " + String(input.repeats).trim(),
+    "",
+    "Заявка оформлена ИИ-помощником со слов сотрудника."
+  ];
+  return lines.join("\n");
+}
+
+// Короткий отпечаток содержимого. Криптостойкость здесь не нужна: задача
+// не в защите, а в том, чтобы подтверждали ровно то, что показали.
+function draftToken(title, description, email) {
+  var text = String(title) + " " + String(description) + " " + String(email);
+  var hash = 5381;
+  for (var i = 0; i < text.length; i += 1) {
+    hash = ((hash * 33) ^ text.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(36);
+}
+
 function failureReason(status) {
   if (status === 401 || status === 403) {
     return "unauthorized";
@@ -284,37 +349,68 @@ async function run(input) {
   var people = Array.isArray(employees.people) ? employees.people : [];
 
   var identity = resolveRequesterEmail(people, clientId, config, input.requesterEmail);
+
+  // Шаг 1: чего не хватает. Недостающая почта - такой же незаданный вопрос,
+  // как и остальные, поэтому спрашиваем всё разом, а не в два подхода.
+  var missing = missingDetails(input);
   if (!identity.email) {
-    // Не ошибка: сотрудник просто ещё не привязан к этому каналу.
-    return {
-      ok: false,
-      reason: "need_requester_email",
-      question: "Назовите, пожалуйста, вашу рабочую почту — заявка будет оформлена от вашего имени."
-    };
+    missing = missing.concat([{
+      name: "requesterEmail",
+      question: "Назовите вашу рабочую почту — заявка будет оформлена от вашего имени."
+    }]);
+  }
+
+  if (missing.length) {
+    return { ok: false, reason: "need_details", missing: missing };
   }
 
   var requester = { email: identity.email };
+  var description = composeDescription(input);
+  var priorityCode = priorityFor(rulesDoc, input.categoryId, searchableCode(input.errorCode));
+  var token = draftToken(input.title, description, identity.email);
 
-  // Шаг 1: поиск дублей. Отдельного фильтра "только открытые" без знания ID
+  // Шаг 2: черновик. Пока сотрудник не подтвердил показанный ему состав,
+  // наружу не ходим вовсе - ни поиска дублей, ни создания.
+  if (String(input.confirmToken || "").trim() !== token) {
+    return {
+      ok: true,
+      stage: "draft",
+      confirmToken: token,
+      draft: {
+        title: input.title,
+        description: description,
+        system: input.system,
+        errorCode: searchableCode(input.errorCode),
+        categoryId: input.categoryId || null,
+        priority: priorityCode,
+        reaction: reactionFor(rulesDoc, priorityCode),
+        requesterEmail: identity.email,
+        requesterSource: identity.source
+      }
+    };
+  }
+
+  // Шаг 3: поиск дублей. Отдельного фильтра "только открытые" без знания ID
   // статусов не построить, поэтому отбираем на своей стороне.
-  if (isFilled(input.errorCode)) {
+  var code = searchableCode(input.errorCode);
+  if (code) {
     var search = await Http.get({
       url: apiUrl(config.host, "/tickets/"),
-      params: { search: String(input.errorCode).trim(), page: 1, deleted: 0 },
+      params: { search: code, page: 1, deleted: 0 },
       headers: headers
     });
 
     if (search.status === 200) {
       var duplicate = findDuplicate(
         ticketsOf(search.body),
-        input.errorCode,
+        code,
         input.system,
         config.closedStatusIds
       );
       if (duplicate) {
         await Log.info({
           message: "Найдена открытая заявка с тем же признаком",
-          data: { number: duplicate.unique_id, errorCode: input.errorCode }
+          data: { number: duplicate.unique_id, errorCode: code }
         });
         return {
           ok: true,
@@ -335,12 +431,16 @@ async function run(input) {
     }
   }
 
-  // Шаг 2: создание.
-  var priorityCode = priorityFor(rulesDoc, input.categoryId, input.errorCode);
+  // Шаг 4: создание.
   var response = await Http.post({
     url: apiUrl(config.host, "/tickets/"),
     headers: headers,
-    body: buildTicketBody(config, input, priorityCode, requester)
+    body: buildTicketBody(
+      config,
+      { title: input.title, description: description },
+      priorityCode,
+      requester
+    )
   });
 
   if (response.status !== 200 && response.status !== 201) {
@@ -372,7 +472,7 @@ async function run(input) {
     data: {
       number: number,
       priority: priorityCode,
-      errorCode: input.errorCode || null,
+      errorCode: code,
       requester: identity.email,
       identitySource: identity.source
     }
@@ -380,6 +480,7 @@ async function run(input) {
 
   return {
     ok: true,
+    stage: "created",
     duplicate: false,
     number: number,
     status: created.status_id || null,
@@ -407,16 +508,24 @@ if (typeof module !== "undefined" && module.exports) {
     withPerson: withPerson,
     pickUserByEmail: pickUserByEmail,
     readSettings: readSettings,
-    failureReason: failureReason
+    failureReason: failureReason,
+    saysNoCode: saysNoCode,
+    searchableCode: searchableCode,
+    missingDetails: missingDetails,
+    composeDescription: composeDescription,
+    draftToken: draftToken
   };
 } else {
   return run({
     title: title,
-    description: description,
     system: system,
+    whatHappened: whatHappened,
     errorCode: errorCode,
+    startedAt: startedAt,
+    repeats: repeats,
     categoryId: categoryId,
     requesterEmail: requesterEmail,
+    confirmToken: confirmToken,
     dbIntegration: dbIntegration
   });
 }
