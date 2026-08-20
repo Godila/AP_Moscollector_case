@@ -2,8 +2,8 @@
 id: function_moscollector_publishdocument_zudln
 name: moscollector.publishDocument
 position:
-  x: 761
-  y: 495
+  x: 1239
+  y: 497
 next-step: null
 next-error-step: null
 parameters:

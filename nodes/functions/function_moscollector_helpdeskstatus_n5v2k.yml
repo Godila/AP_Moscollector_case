@@ -2,8 +2,8 @@
 id: function_moscollector_helpdeskstatus_n5v2k
 name: moscollector.helpdeskStatus
 position:
-  x: 2260
-  y: 480
+  x: 2240
+  y: 489
 next-step: null
 next-error-step: null
 parameters:

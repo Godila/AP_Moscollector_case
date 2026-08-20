@@ -2,8 +2,8 @@
 id: function_moscollector_navguide_p3x9d
 name: moscollector.navGuide
 position:
-  x: 1443
-  y: 482
+  x: 902
+  y: 502
 next-step: null
 next-error-step: null
 parameters:

@@ -2,8 +2,8 @@
 id: function_moscollector_helpdeskcreate_j6p1x
 name: moscollector.helpdeskCreate
 position:
-  x: 1980
-  y: 480
+  x: 1920
+  y: 491
 next-step: null
 next-error-step: null
 parameters:

@@ -2,8 +2,8 @@
 id: function_moscollector_glossarylookup_a7k2m
 name: moscollector.glossaryLookup
 position:
-  x: 427
-  y: 487
+  x: 252
+  y: 493
 next-step: null
 next-error-step: null
 parameters:
