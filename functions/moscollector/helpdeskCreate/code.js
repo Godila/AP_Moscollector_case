@@ -14,9 +14,6 @@ var SETTINGS_KEY = "helpdesk";
 var RULES_KEY = "sla-rules";
 var EMPLOYEES_KEY = "employees";
 
-// Группа "Клиент" в HelpDeskEddy. Сотрудники, от чьего имени идут заявки,
-// заводятся именно в неё, а не в staff: иначе они попадут в исполнители.
-var CLIENT_GROUP_ID = 1;
 
 function documentValue(document) {
   if (!document || typeof document !== "object") {
@@ -117,14 +114,19 @@ function findDuplicate(tickets, errorCode, system, closedStatusIds) {
 
 // Постановщик заявки.
 //
-// Раньше заявки уходили от учётной записи интеграции, и в HelpDeskEddy они
-// попадали в папку "от меня" администратора вместо общей очереди. Правильный
-// постановщик - сам сотрудник, поэтому его надо опознать.
+// Заявки от учётной записи интеграции падали в папку "от меня" администратора
+// вместо общей очереди. Постановщиком должен быть сам сотрудник.
 //
-// В eXpress личность придёт из корпоративного аккаунта. В Telegram и тестовом
-// виджете её взять неоткуда, поэтому держим справочник: собеседник канала
-// сопоставляется с сотрудником по clientId. Незнакомый представляется один
-// раз, и мы его дописываем.
+// Агент сотрудников НЕ создаёт. В HelpDeskEddy они заводятся импортом
+// из корпоративного каталога, как и положено, а наше дело - опознать
+// существующего и сослаться на его user_id. Если сотрудника в системе нет,
+// это пробел в провижининге: чинит администратор, а не бот. Создавать
+// пользователя на каждое обращение значило бы засорять систему учётками
+// с выдуманными адресами.
+//
+// Цепочка опознания: собеседник канала -> корпоративная почта -> user_id.
+// Первое звено в eXpress даёт корпоративный аккаунт; в Telegram и тестовом
+// виджете его заменяет справочник employees.
 function findPerson(people, clientId) {
   if (!Array.isArray(people) || !isFilled(clientId)) {
     return null;
@@ -140,31 +142,37 @@ function looksLikeEmail(value) {
   return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
-// Разбираем "Ковалёв Пётр Игнатьевич" или "Пётр Ковалёв" в имя и фамилию.
-// Отчество отбрасываем: в карточке HelpDeskEddy для него места нет.
-function splitName(fullName) {
-  var parts = String(fullName || "").trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) {
-    return { name: "", lastname: "" };
+// Какую почту искать в HelpDeskEddy. Справочник - основной источник,
+// fallbackUserEmail - демонстрационная подмена на случай незнакомого
+// собеседника, чтобы показ не спотыкался. В бою её быть не должно.
+function requesterEmail(people, clientId, settings) {
+  var person = findPerson(people, clientId);
+  if (person && looksLikeEmail(person.email)) {
+    return { email: person.email, source: "directory" };
   }
-  if (parts.length === 1) {
-    return { name: parts[0], lastname: "" };
+  if (looksLikeEmail(settings.fallbackUserEmail)) {
+    return { email: settings.fallbackUserEmail, source: "fallback" };
   }
-  // Русская норма записи - фамилия первой, когда частей три.
-  if (parts.length >= 3) {
-    return { name: parts[1], lastname: parts[0] };
-  }
-  return { name: parts[0], lastname: parts[1] };
+  return { email: null, source: "none" };
 }
 
-function personFromInput(clientId, fullName, email) {
-  var split = splitName(fullName);
-  return {
-    clientId: String(clientId),
-    name: split.name,
-    lastname: split.lastname,
-    email: String(email).trim()
-  };
+function fullNameOf(user) {
+  if (!user) {
+    return null;
+  }
+  var parts = [user.lastname, user.name].filter(function (part) {
+    return typeof part === "string" && part.trim() !== "";
+  });
+  return parts.length ? parts.join(" ") : user.email || null;
+}
+
+// exact_search не гарантирует, что первым придёт именно нужный: сверяем сами.
+function pickUserByEmail(users, email) {
+  var needle = String(email).trim().toLowerCase();
+  var found = (users || []).filter(function (user) {
+    return user && String(user.email).trim().toLowerCase() === needle;
+  });
+  return found.length ? found[0] : null;
 }
 
 function priorityFor(rules, categoryId, errorCode) {
@@ -201,12 +209,11 @@ function buildTicketBody(settings, input, priorityCode, requester) {
     create_from_user: 1
   };
 
-  // Постановщик - сотрудник, а не учётная запись интеграции. Только так
-  // заявка попадает в общую очередь и её можно распределить.
-  if (requester && looksLikeEmail(requester.email)) {
-    body.user_email = requester.email;
-  } else if (isFilled(settings.defaultUserEmail)) {
-    body.user_email = settings.defaultUserEmail;
+  // Ссылаемся на существующего пользователя по id. user_email здесь не годится:
+  // при незнакомом адресе HelpDeskEddy молча заведёт нового пользователя,
+  // а нам нужно ровно обратное - опознать, а не создать.
+  if (requester && requester.id) {
+    body.user_id = requester.id;
   }
   if (typeof settings.departmentId === "number") {
     body.department_id = settings.departmentId;
@@ -233,51 +240,24 @@ function failureReason(status) {
   return "request_failed";
 }
 
-// Пользователь заводится один раз на сотрудника. Пароль ему нужен только
-// потому, что этого требует API: входить под этими учётными записями никто
-// не будет, доступ к системе у сотрудников через агента.
-async function ensureUser(config, headers, requester) {
+// Только поиск. Создание пользователей - зона администратора, не агента.
+async function lookupUser(config, headers, email) {
   var search = await Http.get({
     url: apiUrl(config.host, "/users/"),
-    params: { search: requester.email, exact_search: 1 },
+    params: { search: email, exact_search: 1 },
     headers: headers
   });
 
-  if (search.status === 200) {
-    var existing = ticketsOf(search.body).filter(function (user) {
-      return user && String(user.email).toLowerCase() === requester.email.toLowerCase();
-    });
-    if (existing.length) {
-      return { created: false, id: existing[0].id };
-    }
+  if (search.status !== 200) {
+    return { state: "lookup_failed", status: search.status };
   }
 
-  var created = await Http.post({
-    url: apiUrl(config.host, "/users/"),
-    headers: headers,
-    body: {
-      name: requester.name || requester.email,
-      lastname: requester.lastname || "",
-      email: requester.email,
-      password: config.newUserPassword,
-      group_id: CLIENT_GROUP_ID,
-      department: [config.departmentId || 1],
-      status: "active",
-      language: "ru"
-    }
-  });
-
-  if (created.status !== 200 && created.status !== 201) {
-    // Не повод отменять заявку: HelpDeskEddy заведёт пользователя сам
-    // по user_email, просто без имени и фамилии.
-    await Log.warn({
-      message: "Пользователь не заведён, заявка уйдёт с автосозданием",
-      data: { status: created.status, email: requester.email }
-    });
-    return { created: false, id: null };
+  var user = pickUserByEmail(ticketsOf(search.body), email);
+  if (!user) {
+    return { state: "not_registered" };
   }
 
-  return { created: true, id: ((created.body || {}).data || {}).id || null };
+  return { state: "ok", id: user.id, email: user.email, fullName: fullNameOf(user) };
 }
 
 async function run(input) {
@@ -296,33 +276,34 @@ async function run(input) {
   var headers = { Authorization: authHeader(config.email, config.apiKey), Accept: "application/json" };
   var rulesDoc = await Db.get({ dbIntegration: input.dbIntegration, documentKey: RULES_KEY });
 
-  // Кто ставит заявку.
+  // Кто ставит заявку: канал -> корпоративная почта -> существующий user_id.
   var clientInfo = await Context.getClientInfo();
   var clientId = clientInfo && clientInfo.id ? String(clientInfo.id) : "";
   var employeesDoc = await Db.get({ dbIntegration: input.dbIntegration, documentKey: EMPLOYEES_KEY });
   var employees = documentValue(employeesDoc) || {};
   var people = Array.isArray(employees.people) ? employees.people : [];
 
-  var requester = findPerson(people, clientId);
-  var learned = false;
-
-  if (!requester) {
-    if (!isFilled(input.requesterName) || !looksLikeEmail(input.requesterEmail)) {
-      // Спрашиваем один раз за сотрудника, дальше он опознаётся сам.
-      return {
-        ok: false,
-        reason: "unknown_requester",
-        question: "Представьтесь, пожалуйста: фамилия и имя, а также рабочая почта — заявка будет оформлена от вашего имени."
-      };
-    }
-    requester = personFromInput(clientId, input.requesterName, input.requesterEmail);
-    people = people.concat([requester]);
-    employees.people = people;
-    await Db.put({ dbIntegration: input.dbIntegration, documentKey: EMPLOYEES_KEY, value: employees });
-    learned = true;
+  var identity = requesterEmail(people, clientId, config);
+  if (!identity.email) {
+    await Log.error({
+      message: "Не удалось определить постановщика",
+      data: { clientId: clientId, people: people.length }
+    });
+    return { ok: false, reason: "unknown_requester" };
   }
 
-  await ensureUser(config, headers, requester);
+  var requester = await lookupUser(config, headers, identity.email);
+
+  if (requester.state === "not_registered") {
+    await Log.error({
+      message: "Сотрудник не заведён в HelpDeskEddy",
+      data: { email: identity.email, source: identity.source }
+    });
+    return { ok: false, reason: "requester_not_registered", email: identity.email };
+  }
+  if (requester.state !== "ok") {
+    return { ok: false, reason: failureReason(requester.status), status: requester.status };
+  }
 
   // Шаг 1: поиск дублей. Отдельного фильтра "только открытые" без знания ID
   // статусов не построить, поэтому отбираем на своей стороне.
@@ -390,7 +371,8 @@ async function run(input) {
       priority: priorityCode,
       errorCode: input.errorCode || null,
       requester: requester.email,
-      learned: learned
+      requesterId: requester.id,
+      identitySource: identity.source
     }
   });
 
@@ -401,8 +383,7 @@ async function run(input) {
     status: created.status_id || null,
     priority: priorityCode,
     reaction: reactionFor(rulesDoc, priorityCode),
-    requester: (requester.lastname + " " + requester.name).trim(),
-    requesterRemembered: learned
+    requester: requester.fullName
   };
 }
 
@@ -419,8 +400,9 @@ if (typeof module !== "undefined" && module.exports) {
     buildTicketBody: buildTicketBody,
     findPerson: findPerson,
     looksLikeEmail: looksLikeEmail,
-    splitName: splitName,
-    personFromInput: personFromInput,
+    requesterEmail: requesterEmail,
+    fullNameOf: fullNameOf,
+    pickUserByEmail: pickUserByEmail,
     readSettings: readSettings,
     failureReason: failureReason
   };
@@ -431,8 +413,6 @@ if (typeof module !== "undefined" && module.exports) {
     system: system,
     errorCode: errorCode,
     categoryId: categoryId,
-    requesterName: requesterName,
-    requesterEmail: requesterEmail,
     dbIntegration: dbIntegration
   });
 }
