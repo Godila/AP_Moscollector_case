@@ -7,7 +7,14 @@
 // в коде расходилась бы с базой молча.
 
 var DOCUMENT_KEY = "nav-scenarios";
-var MIN_SCORE = 1;
+
+// Порог 2, а не 1, потому что совпадения по одному названию сервиса мало.
+// На "Не открывается DocsVision, ошибка E-500" сценарий согласования служебной
+// записки набирал единицу за слово "DocsVision" и возвращался как найденный -
+// формально верно, по сути мусор. Теперь нужно совпадение по разделу (+2)
+// или по алиасу (+3), то есть по тому, ЧТО человек хочет сделать,
+// а не только где.
+var MIN_SCORE = 2;
 
 function documentValue(document) {
   if (!document || typeof document !== "object") {
@@ -42,26 +49,57 @@ function normalize(raw) {
     .trim();
 }
 
-// Совпадение по алиасу весомее совпадения по названию раздела, а совпадение
-// по разделу весомее совпадения по сервису: "список бригад" должен побеждать
-// просто "АРМ", иначе на любой вопрос про АРМ вернётся первый попавшийся раздел.
-function scoreScenario(scenario, haystack) {
+// Слова, которые есть в любой фразе и ничего не различают.
+var STOPWORDS = {
+  как: true, где: true, что: true, для: true, при: true, это: true,
+  мне: true, нужно: true, надо: true, можно: true, посмотреть: true
+};
+
+// Сравниваем по усечённым основам: "согласовать" и "согласование" - одно и то же
+// для наших целей, а точное совпадение словоформ в русском не работает.
+// Пять символов подобраны по нашему же справочнику: "служебную"/"служебной",
+// "записку"/"записки", "бригад"/"бригады" сходятся, разные слова - нет.
+function stems(text) {
+  return normalize(text)
+    .split(" ")
+    .filter(function (word) {
+      return word.length >= 3 && !STOPWORDS[word];
+    })
+    .map(function (word) {
+      return word.slice(0, 5);
+    });
+}
+
+function coverage(phrase, queryStems) {
+  var words = stems(phrase);
+  if (!words.length) {
+    return 0;
+  }
+  var hits = words.filter(function (word) {
+    return queryStems.indexOf(word) !== -1;
+  });
+  return hits.length / words.length;
+}
+
+// Алиас весомее раздела, раздел весомее сервиса. Название сервиса само по себе
+// даёт единицу - этого мало, чтобы пройти порог: одного упоминания системы
+// недостаточно, нужно понять, ЧТО с ней хотят сделать.
+function scoreScenario(scenario, queryStems) {
   var score = 0;
 
+  var bestAlias = 0;
   (scenario.aliases || []).forEach(function (alias) {
-    var needle = normalize(alias);
-    if (needle && haystack.indexOf(needle) !== -1) {
-      score += 3;
-    }
+    bestAlias = Math.max(bestAlias, coverage(alias, queryStems));
   });
+  if (bestAlias >= 0.5) {
+    score += 3;
+  }
 
-  var section = normalize(scenario.section);
-  if (section && haystack.indexOf(section) !== -1) {
+  if (coverage(scenario.section, queryStems) >= 0.5) {
     score += 2;
   }
 
-  var service = normalize(scenario.service);
-  if (service && haystack.indexOf(service) !== -1) {
+  if (coverage(scenario.service, queryStems) >= 0.6) {
     score += 1;
   }
 
@@ -69,8 +107,8 @@ function scoreScenario(scenario, haystack) {
 }
 
 function findScenario(scenarios, request) {
-  var haystack = normalize(request);
-  if (!haystack) {
+  var queryStems = stems(request);
+  if (!queryStems.length) {
     return { status: "not_found", suggestions: [] };
   }
 
@@ -78,7 +116,7 @@ function findScenario(scenarios, request) {
   var bestScore = 0;
 
   scenarios.forEach(function (scenario) {
-    var score = scoreScenario(scenario, haystack);
+    var score = scoreScenario(scenario, queryStems);
     if (score > bestScore) {
       best = scenario;
       bestScore = score;
@@ -130,6 +168,8 @@ if (typeof module !== "undefined" && module.exports) {
     documentValue: documentValue,
     classify: classify,
     normalize: normalize,
+    stems: stems,
+    coverage: coverage,
     scoreScenario: scoreScenario,
     findScenario: findScenario
   };
