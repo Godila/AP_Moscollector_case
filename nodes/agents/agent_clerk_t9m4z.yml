@@ -7,7 +7,7 @@ position:
 next-step: null
 next-error-step: null
 parameters:
-  llm-model-key: 1000156248-deepseek_deepseekv4p-ymw
+  llm-model-key: 1000156248-anthropic_claudesonn-nxe
   llm-model-settings:
     max-tokens: 6000
     temperature: 0.2
