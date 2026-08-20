@@ -1,13 +1,17 @@
 // publishDocument - выдача документа файлом через встроенное хранилище платформы.
 //
-// Написано по образцу из JAICP, но переложено на песочницу Agents Platform:
-// import и require здесь отсутствуют, логирование идёт через Log.info, а botId
-// не хардкодится - его отдаёт Context.getBotId(). Http.post для загрузки
-// не годится: его body объявлен как JSON-объект и multipart не отправит,
-// поэтому единственный путь - глобальный fetch с FormData.
+// Форматы:
+//   docx  - настоящий Word через npm-пакет docx (зависимость коллекции)
+//   xls   - таблица в формате SpreadsheetML 2003, Excel открывает её штатно
+//   txt, md, csv, html - текст как есть
 //
-// Адрес хранилища константой сознательно: это демо-стенд в облаке. На on-prem
-// хост другой, и тогда адрес переезжает в документ базы, как остальные настройки.
+// Почему xls без библиотеки. SpreadsheetML - это XML, который Excel понимает
+// с 2003 года. Ради одной таблицы тащить вторую зависимость незачем: пакеты
+// для xlsx рассчитаны на Node со стримами, а здесь третье окружение,
+// и проверять его пришлось бы отдельно.
+//
+// Http.post для загрузки не годится: его body объявлен как JSON-объект
+// и multipart не отправит. Поэтому глобальный fetch с FormData.
 
 var UPLOAD_URL = "https://bot.jaicp.com/restapi/file/upload";
 
@@ -17,10 +21,18 @@ var MIME_BY_EXTENSION = {
   htm: "text/html;charset=utf-8",
   md: "text/markdown;charset=utf-8",
   csv: "text/csv;charset=utf-8",
-  json: "application/json;charset=utf-8"
+  json: "application/json;charset=utf-8",
+  xls: "application/vnd.ms-excel",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 };
 
 var DEFAULT_MIME = "application/octet-stream";
+
+// Хранилище отдаёт файл без указания кодировки, и Windows читает его в CP1251:
+// кириллица превращается в "РРЅСЃС‚СЂСѓРєС†РёСЏ". charset в MIME при загрузке
+// до скачивающего не доезжает, поэтому признак кодировки кладём внутрь файла.
+var BOM = "﻿";
+var BOM_EXTENSIONS = { txt: true, md: true, csv: true };
 
 function extensionOf(name) {
   var match = /\.([0-9a-zA-Z]+)$/.exec(String(name || ""));
@@ -30,16 +42,6 @@ function extensionOf(name) {
 function mimeFor(name) {
   return MIME_BY_EXTENSION[extensionOf(name)] || DEFAULT_MIME;
 }
-
-// Хранилище отдаёт файл без указания кодировки, и Windows читает его в CP1251:
-// кириллица превращается в "РРЅСЃС‚СЂСѓРєС†РёСЏ". Указания charset в MIME при
-// загрузке недостаточно - до скачивающего оно не доезжает. Признак кодировки
-// должен лежать внутри самого файла.
-//
-// Для простого текста это BOM, для HTML - мета-тег. Оба способа работают
-// без участия сервера.
-var BOM = "﻿";
-var BOM_EXTENSIONS = { txt: true, md: true, csv: true };
 
 function needsBom(name) {
   return BOM_EXTENSIONS[extensionOf(name)] === true;
@@ -57,7 +59,6 @@ function withEncoding(name, text) {
     if (/charset/i.test(body)) {
       return body;
     }
-    // Модель прислала голый фрагмент - заворачиваем в документ с кодировкой.
     if (!/<html[\s>]/i.test(body)) {
       return '<!doctype html><html lang="ru"><head><meta charset="utf-8">' +
         "</head><body>" + body + "</body></html>";
@@ -70,8 +71,6 @@ function withEncoding(name, text) {
   return body;
 }
 
-// Имя в хранилище делаем уникальным: одинаковые имена от разных сотрудников
-// иначе рискуют перетереть друг друга.
 function uniqueName(name, stamp) {
   var raw = String(name || "document.txt");
   var extension = extensionOf(raw);
@@ -80,7 +79,134 @@ function uniqueName(name, stamp) {
   return base + "-" + stamp + (extension ? "." + extension : ".txt");
 }
 
-// Ради одного понятного ответа вместо пяти разных исключений.
+function linkFrom(payload) {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+  return payload.link || payload.url || payload.fileUrl || null;
+}
+
+// ---------- таблица ----------
+
+// Модель охотнее всего рисует markdown-таблицу, поэтому её и разбираем.
+// Заодно принимаем TSV и строки с разделителем ";" - на случай, если модель
+// решит выдать таблицу иначе.
+function isSeparatorRow(line) {
+  return /^\s*\|?[\s:|-]*-{2,}[\s:|-]*\|?\s*$/.test(line);
+}
+
+function splitRow(line) {
+  var text = String(line);
+
+  if (text.indexOf("|") !== -1) {
+    var cells = text.split("|");
+    // У markdown-таблицы крайние разделители дают пустые ячейки по краям.
+    if (cells.length && cells[0].trim() === "") { cells.shift(); }
+    if (cells.length && cells[cells.length - 1].trim() === "") { cells.pop(); }
+    return cells.map(function (cell) { return cell.trim(); });
+  }
+  if (text.indexOf("\t") !== -1) {
+    return text.split("\t").map(function (cell) { return cell.trim(); });
+  }
+  if (text.indexOf(";") !== -1) {
+    return text.split(";").map(function (cell) { return cell.trim(); });
+  }
+  return [text.trim()];
+}
+
+function parseRows(text) {
+  return String(text == null ? "" : text)
+    .split(/\r?\n/)
+    .filter(function (line) { return line.trim() !== "" && !isSeparatorRow(line); })
+    .map(splitRow);
+}
+
+function escapeXml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// Excel показывает число правым краем и умеет считать по нему, поэтому тип
+// проставляем честно. Кириллические подписи при этом остаются строками.
+function cellXml(value) {
+  var text = String(value == null ? "" : value);
+  var isNumber = text !== "" && /^-?\d+([.,]\d+)?$/.test(text);
+  if (isNumber) {
+    return '<Cell><Data ss:Type="Number">' + text.replace(",", ".") + "</Data></Cell>";
+  }
+  return '<Cell><Data ss:Type="String">' + escapeXml(text) + "</Data></Cell>";
+}
+
+function toSpreadsheetXml(rows, sheetName) {
+  var body = rows.map(function (row) {
+    return "<Row>" + row.map(cellXml).join("") + "</Row>";
+  }).join("");
+
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<?mso-application progid="Excel.Sheet"?>\n' +
+    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"' +
+    ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
+    '<Worksheet ss:Name="' + escapeXml(sheetName || "Лист1") + '">' +
+    "<Table>" + body + "</Table></Worksheet></Workbook>";
+}
+
+// ---------- Word ----------
+
+// Пакет приходит глобальной переменной с именем из code-name, require здесь
+// нет. Рабочий объект у большинства сборок лежит в .default.
+function docxLib() {
+  if (typeof docx === "undefined" || !docx) {
+    return null;
+  }
+  return docx.default ? docx.default : docx;
+}
+
+function buildDocxDocument(lib, text) {
+  var lines = String(text == null ? "" : text).split(/\r?\n/);
+  var children = [];
+  var headingUsed = false;
+
+  lines.forEach(function (line) {
+    var trimmed = line.trim();
+
+    if (trimmed === "") {
+      children.push(new lib.Paragraph({ text: "" }));
+      return;
+    }
+    // Первая непустая строка становится заголовком документа.
+    if (!headingUsed) {
+      headingUsed = true;
+      children.push(new lib.Paragraph({ text: trimmed, heading: lib.HeadingLevel.HEADING_1 }));
+      return;
+    }
+    children.push(new lib.Paragraph({ children: [new lib.TextRun(trimmed)] }));
+  });
+
+  return new lib.Document({ sections: [{ children: children }] });
+}
+
+async function docxBlob(text) {
+  var lib = docxLib();
+  if (!lib || !lib.Document || !lib.Packer) {
+    return null;
+  }
+
+  var document = buildDocxDocument(lib, text);
+
+  // В браузерных сборках есть toBlob, в серверных - только toBuffer.
+  // Какая здесь, заранее неизвестно, поэтому пробуем обе.
+  if (typeof lib.Packer.toBlob === "function") {
+    return await lib.Packer.toBlob(document);
+  }
+  var buffer = await lib.Packer.toBuffer(document);
+  return new Blob([buffer], { type: MIME_BY_EXTENSION.docx });
+}
+
+// ---------- загрузка ----------
+
 function missingGlobals() {
   var missing = [];
   if (typeof fetch === "undefined") { missing.push("fetch"); }
@@ -89,13 +215,22 @@ function missingGlobals() {
   return missing;
 }
 
-function linkFrom(payload) {
-  if (!payload || typeof payload !== "object") {
-    return null;
+async function bodyBlob(fileName, text) {
+  var extension = extensionOf(fileName);
+
+  if (extension === "docx") {
+    var blob = await docxBlob(text);
+    return blob ? { blob: blob } : { error: "docx_missing" };
   }
-  // Образец возвращал link. Соседние поля проверяем на случай, если форма ответа
-  // окажется другой - тогда это будет видно сразу, а не после отладки.
-  return payload.link || payload.url || payload.fileUrl || null;
+
+  if (extension === "xls") {
+    var xml = toSpreadsheetXml(parseRows(text));
+    return { blob: new Blob([xml], { type: MIME_BY_EXTENSION.xls }) };
+  }
+
+  return {
+    blob: new Blob([withEncoding(fileName, text)], { type: mimeFor(fileName) })
+  };
 }
 
 async function run(name, text) {
@@ -108,12 +243,20 @@ async function run(name, text) {
     return { ok: false, reason: "runtime_missing", missing: missing };
   }
 
-  var botId = await Context.getBotId();
   var fileName = uniqueName(name, Date.now());
-  var body = withEncoding(fileName, text);
+  var prepared = await bodyBlob(fileName, text);
 
+  if (prepared.error) {
+    await Log.error({
+      message: "Не удалось собрать документ",
+      data: { reason: prepared.error, fileName: fileName, docxType: typeof docx }
+    });
+    return { ok: false, reason: prepared.error, fileName: fileName };
+  }
+
+  var botId = await Context.getBotId();
   var form = new FormData();
-  form.append("file", new Blob([body], { type: mimeFor(fileName) }), fileName);
+  form.append("file", prepared.blob, fileName);
   form.append("botId", botId);
 
   var response = await fetch(UPLOAD_URL, { method: "POST", body: form });
@@ -146,7 +289,7 @@ async function run(name, text) {
   await Log.info({ message: "Документ загружен", data: { fileName: fileName, url: url } });
 
   // Реакция отправляет файл в канал сразу, ссылка в ответе нужна агенту,
-  // чтобы он мог назвать её текстом. Узел вызывается без подтверждения:
+  // чтобы он мог назвать её текстом. Подтверждение на узле не включаем:
   // из функции с hitl-tool-config реакции до канала могут не дойти.
   await Reactions.sendFile({ url: url, name: fileName });
 
@@ -160,7 +303,14 @@ if (typeof module !== "undefined" && module.exports) {
     uniqueName: uniqueName,
     linkFrom: linkFrom,
     needsBom: needsBom,
-    withEncoding: withEncoding
+    withEncoding: withEncoding,
+    isSeparatorRow: isSeparatorRow,
+    splitRow: splitRow,
+    parseRows: parseRows,
+    escapeXml: escapeXml,
+    cellXml: cellXml,
+    toSpreadsheetXml: toSpreadsheetXml,
+    buildDocxDocument: buildDocxDocument
   };
 } else {
   return run(fileName, content);
