@@ -14,6 +14,10 @@ var SETTINGS_KEY = "helpdesk";
 var RULES_KEY = "sla-rules";
 var EMPLOYEES_KEY = "employees";
 
+// Группа "Клиент" в HelpDeskEddy. Сотрудники заводятся в неё, а не в staff:
+// иначе они попадут в список исполнителей.
+var CLIENT_GROUP_ID = 1;
+
 
 function documentValue(document) {
   if (!document || typeof document !== "object") {
@@ -117,16 +121,14 @@ function findDuplicate(tickets, errorCode, system, closedStatusIds) {
 // Заявки от учётной записи интеграции падали в папку "от меня" администратора
 // вместо общей очереди. Постановщиком должен быть сам сотрудник.
 //
-// Агент сотрудников НЕ создаёт. В HelpDeskEddy они заводятся импортом
-// из корпоративного каталога, как и положено, а наше дело - опознать
-// существующего и сослаться на его user_id. Если сотрудника в системе нет,
-// это пробел в провижининге: чинит администратор, а не бот. Создавать
-// пользователя на каждое обращение значило бы засорять систему учётками
-// с выдуманными адресами.
-//
 // Цепочка опознания: собеседник канала -> корпоративная почта -> user_id.
 // Первое звено в eXpress даёт корпоративный аккаунт; в Telegram и тестовом
 // виджете его заменяет справочник employees.
+//
+// В заявку идёт user_id существующего пользователя, а не user_email: на
+// незнакомом адресе HelpDeskEddy завёл бы пользователя сам, молча и мимо
+// нашего решения. Заводить или отказывать - решает настройка autoCreateUsers,
+// и решение это должно быть явным.
 function findPerson(people, clientId) {
   if (!Array.isArray(people) || !isFilled(clientId)) {
     return null;
@@ -262,7 +264,50 @@ function failureReason(status) {
   return "request_failed";
 }
 
-// Только поиск. Создание пользователей - зона администратора, не агента.
+// Заведение сотрудника, когда его нет в системе. Включается настройкой
+// autoCreateUsers.
+//
+// Оговорка, которую надо помнить: почта, названная в чате, ничем не
+// подтверждена. Автосоздание само по себе не делает подмену возможной -
+// она возможна и при простом поиске, достаточно назвать чужой адрес. Разница
+// в другом: опечатка порождает призрака вроде ivanov@moscolector.demo,
+// а при импорте из корпоративного каталога такие учётки дают дубли контактов
+// и ломают отчётность по сотрудникам.
+//
+// От подмены защищает только подтверждение почты. В eXpress оно бесплатно -
+// личность приходит из корпоративного аккаунта; в Telegram потребовало бы
+// разового кода на корпоративный ящик.
+async function createUser(config, headers, email) {
+  var created = await Http.post({
+    url: apiUrl(config.host, "/users/"),
+    headers: headers,
+    body: {
+      name: String(email).split("@")[0],
+      lastname: "",
+      email: email,
+      password: config.newUserPassword,
+      group_id: CLIENT_GROUP_ID,
+      department: [config.departmentId || 1],
+      status: "active",
+      language: "ru",
+      notifications: 0
+    }
+  });
+
+  if (created.status !== 200 && created.status !== 201) {
+    await Log.error({
+      message: "Не удалось завести сотрудника",
+      data: { status: created.status, email: email }
+    });
+    return null;
+  }
+
+  var user = (created.body || {}).data || {};
+  await Log.info({ message: "Сотрудник заведён", data: { email: email, id: user.id } });
+  return { state: "ok", id: user.id, email: user.email || email, fullName: fullNameOf(user) };
+}
+
+// Поиск. Создание - только если оно разрешено настройкой.
 async function lookupUser(config, headers, email) {
   var search = await Http.get({
     url: apiUrl(config.host, "/users/"),
@@ -276,6 +321,10 @@ async function lookupUser(config, headers, email) {
 
   var user = pickUserByEmail(ticketsOf(search.body), email);
   if (!user) {
+    if (config.autoCreateUsers === true && isFilled(config.newUserPassword)) {
+      var made = await createUser(config, headers, email);
+      return made || { state: "not_registered" };
+    }
     return { state: "not_registered" };
   }
 
