@@ -149,7 +149,7 @@ function looksLikeEmail(value) {
 // 3. fallbackUserEmail - подмена для тестового виджета, где clientId меняется
 //    каждую сессию. По умолчанию выключена: молча приписать заявку чужому
 //    человеку хуже, чем лишний раз спросить.
-function requesterEmail(people, clientId, settings, provided) {
+function resolveRequesterEmail(people, clientId, settings, provided) {
   var person = findPerson(people, clientId);
   if (person && looksLikeEmail(person.email)) {
     return { email: person.email, source: "directory" };
@@ -305,7 +305,7 @@ async function run(input) {
   var employees = documentValue(employeesDoc) || {};
   var people = Array.isArray(employees.people) ? employees.people : [];
 
-  var identity = requesterEmail(people, clientId, config, input.requesterEmail);
+  var identity = resolveRequesterEmail(people, clientId, config, input.requesterEmail);
   if (!identity.email) {
     // Не ошибка: сотрудник просто ещё не привязан к этому каналу.
     return {
@@ -435,7 +435,7 @@ if (typeof module !== "undefined" && module.exports) {
     buildTicketBody: buildTicketBody,
     findPerson: findPerson,
     looksLikeEmail: looksLikeEmail,
-    requesterEmail: requesterEmail,
+    resolveRequesterEmail: resolveRequesterEmail,
     fullNameOf: fullNameOf,
     withPerson: withPerson,
     pickUserByEmail: pickUserByEmail,
