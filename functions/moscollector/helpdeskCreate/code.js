@@ -14,11 +14,6 @@ var SETTINGS_KEY = "helpdesk";
 var RULES_KEY = "sla-rules";
 var EMPLOYEES_KEY = "employees";
 
-// Группа "Клиент" в HelpDeskEddy. Сотрудники заводятся в неё, а не в staff:
-// иначе они попадут в список исполнителей.
-var CLIENT_GROUP_ID = 1;
-
-
 function documentValue(document) {
   if (!document || typeof document !== "object") {
     return null;
@@ -121,14 +116,14 @@ function findDuplicate(tickets, errorCode, system, closedStatusIds) {
 // Заявки от учётной записи интеграции падали в папку "от меня" администратора
 // вместо общей очереди. Постановщиком должен быть сам сотрудник.
 //
-// Цепочка опознания: собеседник канала -> корпоративная почта -> user_id.
-// Первое звено в eXpress даёт корпоративный аккаунт; в Telegram и тестовом
-// виджете его заменяет справочник employees.
+// Цепочка опознания: собеседник канала -> корпоративная почта -> user_email
+// в заявке. Первое звено в eXpress даёт корпоративный аккаунт; в Telegram
+// и тестовом виджете его заменяет справочник employees.
 //
-// В заявку идёт user_id существующего пользователя, а не user_email: на
-// незнакомом адресе HelpDeskEddy завёл бы пользователя сам, молча и мимо
-// нашего решения. Заводить или отказывать - решает настройка autoCreateUsers,
-// и решение это должно быть явным.
+// Дальше ничего делать не нужно: клиента HelpDeskEddy опознаёт или заводит
+// сам по user_email. Отдельного провижининга здесь быть не должно - клиент
+// это не сотрудник поддержки, ему не нужны ни пароль, ни группа, ни доступ
+// в систему.
 function findPerson(people, clientId) {
   if (!Array.isArray(people) || !isFilled(clientId)) {
     return null;
@@ -165,8 +160,8 @@ function resolveRequesterEmail(people, clientId, settings, provided) {
   return { email: null, source: "none" };
 }
 
-// Привязка канала к сотруднику. Запоминаем только соответствие "собеседник -
-// почта": ФИО берём из карточки HelpDeskEddy, дублировать его здесь незачем.
+// Привязка канала к клиенту: запоминаем "собеседник - почта", чтобы
+// не спрашивать при каждом обращении. ФИО берём из ответа HelpDeskEddy.
 function withPerson(employees, clientId, email, fullName) {
   var people = Array.isArray(employees.people) ? employees.people : [];
   var without = people.filter(function (person) {
@@ -233,11 +228,12 @@ function buildTicketBody(settings, input, priorityCode, requester) {
     create_from_user: 1
   };
 
-  // Ссылаемся на существующего пользователя по id. user_email здесь не годится:
-  // при незнакомом адресе HelpDeskEddy молча заведёт нового пользователя,
-  // а нам нужно ровно обратное - опознать, а не создать.
-  if (requester && requester.id) {
-    body.user_id = requester.id;
+  // Клиента HelpDeskEddy заводит и опознаёт сам по user_email: если такой
+  // адрес уже есть, заявка ляжет на существующего, если нет - создастся новый.
+  // Отдельный вызов POST /users/ для этого не нужен, а он ещё и требует пароль,
+  // которого у клиента быть не должно.
+  if (requester && looksLikeEmail(requester.email)) {
+    body.user_email = requester.email;
   }
   if (typeof settings.departmentId === "number") {
     body.department_id = settings.departmentId;
@@ -262,73 +258,6 @@ function failureReason(status) {
     return "rate_limited";
   }
   return "request_failed";
-}
-
-// Заведение сотрудника, когда его нет в системе. Включается настройкой
-// autoCreateUsers.
-//
-// Оговорка, которую надо помнить: почта, названная в чате, ничем не
-// подтверждена. Автосоздание само по себе не делает подмену возможной -
-// она возможна и при простом поиске, достаточно назвать чужой адрес. Разница
-// в другом: опечатка порождает призрака вроде ivanov@moscolector.demo,
-// а при импорте из корпоративного каталога такие учётки дают дубли контактов
-// и ломают отчётность по сотрудникам.
-//
-// От подмены защищает только подтверждение почты. В eXpress оно бесплатно -
-// личность приходит из корпоративного аккаунта; в Telegram потребовало бы
-// разового кода на корпоративный ящик.
-async function createUser(config, headers, email) {
-  var created = await Http.post({
-    url: apiUrl(config.host, "/users/"),
-    headers: headers,
-    body: {
-      name: String(email).split("@")[0],
-      lastname: "",
-      email: email,
-      password: config.newUserPassword,
-      group_id: CLIENT_GROUP_ID,
-      department: [config.departmentId || 1],
-      status: "active",
-      language: "ru",
-      notifications: 0
-    }
-  });
-
-  if (created.status !== 200 && created.status !== 201) {
-    await Log.error({
-      message: "Не удалось завести сотрудника",
-      data: { status: created.status, email: email }
-    });
-    return null;
-  }
-
-  var user = (created.body || {}).data || {};
-  await Log.info({ message: "Сотрудник заведён", data: { email: email, id: user.id } });
-  return { state: "ok", id: user.id, email: user.email || email, fullName: fullNameOf(user) };
-}
-
-// Поиск. Создание - только если оно разрешено настройкой.
-async function lookupUser(config, headers, email) {
-  var search = await Http.get({
-    url: apiUrl(config.host, "/users/"),
-    params: { search: email, exact_search: 1 },
-    headers: headers
-  });
-
-  if (search.status !== 200) {
-    return { state: "lookup_failed", status: search.status };
-  }
-
-  var user = pickUserByEmail(ticketsOf(search.body), email);
-  if (!user) {
-    if (config.autoCreateUsers === true && isFilled(config.newUserPassword)) {
-      var made = await createUser(config, headers, email);
-      return made || { state: "not_registered" };
-    }
-    return { state: "not_registered" };
-  }
-
-  return { state: "ok", id: user.id, email: user.email, fullName: fullNameOf(user) };
 }
 
 async function run(input) {
@@ -364,30 +293,7 @@ async function run(input) {
     };
   }
 
-  var requester = await lookupUser(config, headers, identity.email);
-
-  if (requester.state === "not_registered") {
-    await Log.error({
-      message: "Сотрудник не заведён в HelpDeskEddy",
-      data: { email: identity.email, source: identity.source }
-    });
-    return { ok: false, reason: "requester_not_registered", email: identity.email };
-  }
-  if (requester.state !== "ok") {
-    return { ok: false, reason: failureReason(requester.status), status: requester.status };
-  }
-
-  // Сотрудник назвался и нашёлся в системе - запоминаем привязку, чтобы
-  // в следующий раз не спрашивать. Записываем только после успешного поиска:
-  // непроверенная почта в справочнике хуже, чем её отсутствие.
-  if (identity.source === "asked" && isFilled(clientId)) {
-    employees.people = withPerson(employees, clientId, requester.email, requester.fullName);
-    await Db.put({ dbIntegration: input.dbIntegration, documentKey: EMPLOYEES_KEY, value: employees });
-    await Log.info({
-      message: "Собеседник привязан к сотруднику",
-      data: { clientId: clientId, email: requester.email }
-    });
-  }
+  var requester = { email: identity.email };
 
   // Шаг 1: поиск дублей. Отдельного фильтра "только открытые" без знания ID
   // статусов не построить, поэтому отбираем на своей стороне.
@@ -448,14 +354,26 @@ async function run(input) {
   var created = (response.body && response.body.data) || {};
   var number = created.unique_id || (created.id ? String(created.id) : null);
 
+  // Собеседник назвал почту и заявка прошла - запоминаем, чтобы в следующий
+  // раз не спрашивать. Пишем только после успеха: непроверенная почта
+  // в справочнике хуже, чем её отсутствие.
+  if (identity.source === "asked" && isFilled(clientId)) {
+    employees.people = withPerson(
+      employees,
+      clientId,
+      identity.email,
+      fullNameOf({ name: created.user_name, lastname: created.user_lastname, email: created.user_email })
+    );
+    await Db.put({ dbIntegration: input.dbIntegration, documentKey: EMPLOYEES_KEY, value: employees });
+  }
+
   await Log.info({
     message: "Заявка создана",
     data: {
       number: number,
       priority: priorityCode,
       errorCode: input.errorCode || null,
-      requester: requester.email,
-      requesterId: requester.id,
+      requester: identity.email,
       identitySource: identity.source
     }
   });
@@ -467,7 +385,7 @@ async function run(input) {
     status: created.status_id || null,
     priority: priorityCode,
     reaction: reactionFor(rulesDoc, priorityCode),
-    requester: requester.fullName
+    requester: fullNameOf({ name: created.user_name, lastname: created.user_lastname, email: created.user_email })
   };
 }
 
