@@ -22,7 +22,7 @@ parameters:
       filled-ai: false
     minScore:
       type: NUMBER
-      value: "8"
+      value: 8
       filled-ai: false
   context-config: null
   hitl-tool-config: null
