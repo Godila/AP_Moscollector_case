@@ -1,0 +1,25 @@
+---
+id: function_moscollector_helpdeskstatus_n5v2k
+name: moscollector.helpdeskStatus
+position:
+  x: 2260
+  y: 480
+next-step: null
+next-error-step: null
+parameters:
+  type: USER
+  collection: moscollector
+  function: helpdeskStatus
+  is-tool: true
+  parameters:
+    number:
+      type: STRING
+      value: null
+      filled-ai: true
+    dbIntegration:
+      type: INTEGRATION_DB
+      value: 1000156248-moscollector-nsn
+      filled-ai: false
+  context-config: null
+  hitl-tool-config: null
+  custom-headers: null

@@ -1,0 +1,43 @@
+---
+id: function_moscollector_helpdeskcreate_j6p1x
+name: moscollector.helpdeskCreate
+position:
+  x: 1980
+  y: 480
+next-step: null
+next-error-step: null
+parameters:
+  type: USER
+  collection: moscollector
+  function: helpdeskCreate
+  is-tool: true
+  parameters:
+    title:
+      type: STRING
+      value: null
+      filled-ai: true
+    description:
+      type: STRING
+      value: null
+      filled-ai: true
+    system:
+      type: STRING
+      value: null
+      filled-ai: true
+    errorCode:
+      type: STRING
+      value: null
+      filled-ai: true
+    categoryId:
+      type: STRING
+      value: null
+      filled-ai: true
+    dbIntegration:
+      type: INTEGRATION_DB
+      value: 1000156248-moscollector-nsn
+      filled-ai: false
+  context-config: null
+  hitl-tool-config:
+    enabled: true
+    approval-question: Создать заявку в HelpDesk по этим данным?
+  custom-headers: null
