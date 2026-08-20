@@ -14,7 +14,7 @@
 // Без явного found=false она уходит в цикл переформулировок и упирается
 // в лимит последовательных вызовов, теряя весь ход.
 
-var MAX_ITEMS = 3;
+var MAX_ITEMS = 5;
 var MAX_CONTENT = 1200;
 
 function isRelevant(chunk, minScore) {
@@ -44,19 +44,29 @@ function selectChunks(chunks, minScore) {
     .filter(function (score) { return score !== null; });
   var topScore = scores.length ? Math.max.apply(null, scores) : null;
 
-  var relevant = chunks.filter(function (chunk) { return isRelevant(chunk, minScore); });
-
-  if (!relevant.length) {
+  // Порог решает один вопрос: есть ли вообще попадание. Решает он его
+  // по лучшему чанку, а не по каждому.
+  //
+  // Раньше порог применялся к каждому чанку, и это оказалось вредно: на вопрос
+  // о порядке допуска выше 8 прошёл ровно один фрагмент - "область применения",
+  // а разделы с самим порядком остались за бортом. Модель получила обрывок,
+  // увидела, что ответа в нём нет, и ушла рассуждать вместо ответа.
+  //
+  // Соседние чанки того же документа сами по себе релевантны: KHub отдаёт их
+  // по убыванию, и они про то же самое. Поэтому при попадании отдаём верхушку
+  // целиком, а при промахе не отдаём ничего.
+  if (topScore === null || topScore < minScore) {
     return { found: false, reason: "not_relevant", topScore: topScore, checked: chunks.length };
   }
 
-  // retrieveChunks отдаёт по убыванию релевантности, но полагаться на это
-  // не будем: сортировка своя стоит дёшево.
-  relevant.sort(function (a, b) { return b.score - a.score; });
+  var ranked = chunks.filter(function (chunk) {
+    return chunk && typeof chunk.score === "number";
+  });
+  ranked.sort(function (a, b) { return b.score - a.score; });
 
   return {
     found: true,
-    items: relevant.slice(0, MAX_ITEMS).map(toItem),
+    items: ranked.slice(0, MAX_ITEMS).map(toItem),
     topScore: topScore,
     checked: chunks.length
   };

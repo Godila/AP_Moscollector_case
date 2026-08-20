@@ -9,7 +9,7 @@ next-error-step: null
 parameters:
   llm-model-key: 1000156248-deepseek_deepseekv4p-ymw
   llm-model-settings:
-    max-tokens: 1500
+    max-tokens: 6000
     temperature: 0.2
     top-p: 1.0
     frequency-penalty: 0.0
@@ -104,7 +104,7 @@ parameters:
   stay-in-agent: true
   telephony-config: null
   enable-context: true
-  chat-history-limit: 50
+  chat-history-limit: 20
   sequential-tool-calls-limit: 8
   unique-tools-count-limit: 4
   total-response-timeout:

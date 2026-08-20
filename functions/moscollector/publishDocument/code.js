@@ -31,6 +31,45 @@ function mimeFor(name) {
   return MIME_BY_EXTENSION[extensionOf(name)] || DEFAULT_MIME;
 }
 
+// Хранилище отдаёт файл без указания кодировки, и Windows читает его в CP1251:
+// кириллица превращается в "РРЅСЃС‚СЂСѓРєС†РёСЏ". Указания charset в MIME при
+// загрузке недостаточно - до скачивающего оно не доезжает. Признак кодировки
+// должен лежать внутри самого файла.
+//
+// Для простого текста это BOM, для HTML - мета-тег. Оба способа работают
+// без участия сервера.
+var BOM = "﻿";
+var BOM_EXTENSIONS = { txt: true, md: true, csv: true };
+
+function needsBom(name) {
+  return BOM_EXTENSIONS[extensionOf(name)] === true;
+}
+
+function withEncoding(name, text) {
+  var body = String(text == null ? "" : text);
+
+  if (needsBom(name)) {
+    return body.charAt(0) === BOM ? body : BOM + body;
+  }
+
+  var extension = extensionOf(name);
+  if (extension === "html" || extension === "htm") {
+    if (/charset/i.test(body)) {
+      return body;
+    }
+    // Модель прислала голый фрагмент - заворачиваем в документ с кодировкой.
+    if (!/<html[\s>]/i.test(body)) {
+      return '<!doctype html><html lang="ru"><head><meta charset="utf-8">' +
+        "</head><body>" + body + "</body></html>";
+    }
+    return body.replace(/<head[^>]*>/i, function (match) {
+      return match + '<meta charset="utf-8">';
+    });
+  }
+
+  return body;
+}
+
 // Имя в хранилище делаем уникальным: одинаковые имена от разных сотрудников
 // иначе рискуют перетереть друг друга.
 function uniqueName(name, stamp) {
@@ -71,7 +110,7 @@ async function run(name, text) {
 
   var botId = await Context.getBotId();
   var fileName = uniqueName(name, Date.now());
-  var body = String(text == null ? "" : text);
+  var body = withEncoding(fileName, text);
 
   var form = new FormData();
   form.append("file", new Blob([body], { type: mimeFor(fileName) }), fileName);
@@ -119,7 +158,9 @@ if (typeof module !== "undefined" && module.exports) {
     extensionOf: extensionOf,
     mimeFor: mimeFor,
     uniqueName: uniqueName,
-    linkFrom: linkFrom
+    linkFrom: linkFrom,
+    needsBom: needsBom,
+    withEncoding: withEncoding
   };
 } else {
   return run(fileName, content);
