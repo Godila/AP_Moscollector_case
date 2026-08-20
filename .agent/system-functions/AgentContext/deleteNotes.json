@@ -1,0 +1,17 @@
+{
+  "description" : "Deletes all stored text notes",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "agentId" : {
+        "type" : "string",
+        "description" : "Optional agent ID or 'all'. If 'all', deletes notes from all contexts"
+      }
+    },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "No return value"
+  }
+}

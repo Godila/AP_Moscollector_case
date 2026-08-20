@@ -1,0 +1,12 @@
+{
+  "description" : "Gets the project short name from the current request's bot ID",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "string",
+    "description" : "The project short name extracted from the bot ID"
+  }
+}

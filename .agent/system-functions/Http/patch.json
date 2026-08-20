@@ -1,0 +1,50 @@
+{
+  "description" : "Sends an HTTP PATCH request to the specified URL",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "url" : {
+        "type" : "string",
+        "description" : "The URL to send the request to"
+      },
+      "params" : {
+        "type" : "object",
+        "description" : "URL query parameters",
+        "properties" : { },
+        "required" : [ ]
+      },
+      "headers" : {
+        "type" : "object",
+        "description" : "HTTP headers",
+        "properties" : { },
+        "required" : [ ]
+      },
+      "body" : {
+        "type" : "object",
+        "description" : "Request body",
+        "properties" : { },
+        "required" : [ ]
+      }
+    },
+    "required" : [ "url" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Response object",
+    "properties" : {
+      "body" : {
+        "type" : "object",
+        "description" : "Response body"
+      },
+      "status" : {
+        "type" : "integer",
+        "description" : "HTTP status code"
+      },
+      "headers" : {
+        "type" : "object",
+        "description" : "Response headers"
+      }
+    },
+    "required" : [ "body", "status", "headers" ]
+  }
+}

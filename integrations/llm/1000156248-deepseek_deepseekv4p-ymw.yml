@@ -1,0 +1,7 @@
+---
+key: 1000156248-deepseek_deepseekv4p-ymw
+credential-key: null
+name: DEEPSEEK - deepseek-v4-pro-0813
+provider: DEEPSEEK
+model: just-ai/deepseek-deepseek/deepseek/deepseek-v4-pro-0813
+is-direct-access: false

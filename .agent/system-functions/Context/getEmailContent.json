@@ -1,0 +1,99 @@
+{
+  "description" : "Gets email content from the current request",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Email content details",
+    "properties" : {
+      "from" : {
+        "type" : "string",
+        "description" : "Sender email address"
+      },
+      "to" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string"
+        },
+        "description" : "Recipient email addresses"
+      },
+      "cc" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string"
+        },
+        "description" : "Carbon copy recipients"
+      },
+      "bcc" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string"
+        },
+        "description" : "Blind carbon copy recipients"
+      },
+      "subject" : {
+        "type" : "string",
+        "description" : "Email subject"
+      },
+      "messageId" : {
+        "type" : "string",
+        "description" : "Unique message identifier"
+      },
+      "sentDate" : {
+        "type" : "string",
+        "description" : "ISO date when email was sent"
+      },
+      "htmlText" : {
+        "type" : "string",
+        "description" : "HTML content of email"
+      },
+      "plainText" : {
+        "type" : "string",
+        "description" : "Plain content of email"
+      },
+      "flags" : {
+        "type" : "array",
+        "items" : {
+          "type" : "string"
+        },
+        "description" : "Email flags"
+      },
+      "headers" : {
+        "type" : "object",
+        "description" : "Email headers"
+      },
+      "attachments" : {
+        "type" : "array",
+        "description" : "Email attachments",
+        "items" : {
+          "type" : "object",
+          "properties" : {
+            "name" : {
+              "type" : "string",
+              "description" : "File name"
+            },
+            "url" : {
+              "type" : "string",
+              "description" : "File URL"
+            },
+            "sizeInBytes" : {
+              "type" : "number",
+              "description" : "File size in bytes"
+            },
+            "mimeType" : {
+              "type" : "string",
+              "description" : "MIME content type"
+            }
+          }
+        }
+      },
+      "event" : {
+        "type" : "string",
+        "description" : "The event type"
+      }
+    }
+  }
+}

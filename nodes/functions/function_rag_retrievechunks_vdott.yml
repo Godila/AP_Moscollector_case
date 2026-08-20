@@ -1,0 +1,29 @@
+---
+id: function_rag_retrievechunks_vdott
+name: Rag.retrieveChunks
+position:
+  x: 928
+  y: 472
+next-step: null
+next-error-step: null
+parameters:
+  type: SYSTEM
+  collection: Rag
+  function: retrieveChunks
+  is-tool: true
+  parameters:
+    ragIntegration:
+      type: INTEGRATION_RAG
+      value: 1000156248-moscollector_demo-rlc
+      filled-ai: false
+    query:
+      type: STRING
+      value: null
+      filled-ai: true
+    historyMessageLimit:
+      type: INTEGER
+      value: null
+      filled-ai: false
+  context-config: null
+  hitl-tool-config: null
+  custom-headers: null

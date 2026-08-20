@@ -1,0 +1,21 @@
+{
+  "description" : "Deletes a previously stored value",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "key" : {
+        "type" : "string",
+        "description" : "Key to delete"
+      },
+      "agentId" : {
+        "type" : "string",
+        "description" : "Optional agent ID or 'all'. If 'all', deletes from all contexts"
+      }
+    },
+    "required" : [ "key" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "No return value"
+  }
+}

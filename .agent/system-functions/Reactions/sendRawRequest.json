@@ -1,0 +1,23 @@
+{
+  "description" : "Sends a raw request as a response for advanced use cases",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "method" : {
+        "type" : "string",
+        "description" : "HTTP method to use for the request"
+      },
+      "body" : {
+        "type" : "object",
+        "description" : "Request body to send",
+        "properties" : { },
+        "required" : [ ]
+      }
+    },
+    "required" : [ "method", "body" ]
+  },
+  "output" : {
+    "type" : "null",
+    "description" : "No return value"
+  }
+}

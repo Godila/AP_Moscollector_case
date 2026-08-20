@@ -1,0 +1,39 @@
+{
+  "description" : "Transfers the active phone call to another phone number. The transfer result can be retrieved using getTransferStatus after the transfer completes.",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "phoneNumber" : {
+        "type" : "string",
+        "description" : "Phone number to transfer the call to. The primary parameter for routing transfers."
+      },
+      "timeout" : {
+        "type" : "integer",
+        "description" : "Transfer timeout in seconds. Leave empty to use the configured default."
+      },
+      "method" : {
+        "type" : "string",
+        "description" : "Transfer protocol. Leave empty or set to 'invite' for a standard blind transfer (the default behavior). Set to 'refer' to switch to SIP REFER."
+      },
+      "continueCall" : {
+        "type" : "boolean",
+        "description" : "Whether the call continues after the transfer completes. Default: false — the caller is disconnected."
+      },
+      "continueRecording" : {
+        "type" : "boolean",
+        "description" : "Whether call recording continues during the transfer. Default: true."
+      },
+      "headers" : {
+        "type" : "object",
+        "description" : "Custom SIP headers as key-value pairs. Leave empty to send no extra headers.",
+        "properties" : { },
+        "required" : [ ]
+      }
+    },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "No return value. Use getTransferStatus to retrieve the transfer result"
+  }
+}

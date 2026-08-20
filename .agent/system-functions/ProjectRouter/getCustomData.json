@@ -1,0 +1,12 @@
+{
+  "description" : "Gets the custom data that was passed during the last context switch to this bot",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "The custom data object from the last switch, or null if no switch occurred or no data was passed"
+  }
+}

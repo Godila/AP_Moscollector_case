@@ -1,0 +1,12 @@
+{
+  "description" : "Gets the structured error of the previously failed node, routed via its error connector",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "The structured error of the last failed node, or undefined if none"
+  }
+}

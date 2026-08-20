@@ -1,0 +1,54 @@
+{
+  "description" : "Send an HTTP request with the specified method and parameters",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "method" : {
+        "type" : "string",
+        "description" : "HTTP method (GET, POST, PUT, DELETE, PATCH)"
+      },
+      "url" : {
+        "type" : "string",
+        "description" : "The URL to send the request to"
+      },
+      "params" : {
+        "type" : "object",
+        "description" : "URL query parameters",
+        "properties" : { },
+        "required" : [ ]
+      },
+      "headers" : {
+        "type" : "object",
+        "description" : "HTTP headers",
+        "properties" : { },
+        "required" : [ ]
+      },
+      "body" : {
+        "type" : "object",
+        "description" : "Request body",
+        "properties" : { },
+        "required" : [ ]
+      }
+    },
+    "required" : [ "method", "url" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Response object",
+    "properties" : {
+      "body" : {
+        "type" : "object",
+        "description" : "Response body"
+      },
+      "status" : {
+        "type" : "integer",
+        "description" : "HTTP status code"
+      },
+      "headers" : {
+        "type" : "object",
+        "description" : "Response headers"
+      }
+    },
+    "required" : [ "body", "status", "headers" ]
+  }
+}

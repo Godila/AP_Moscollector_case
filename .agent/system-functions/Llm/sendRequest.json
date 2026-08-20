@@ -1,0 +1,180 @@
+{
+  "description" : "Sends a request to an LLM model",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "llmModelKey" : {
+        "type" : "string",
+        "description" : "The key identifying which LLM model to use"
+      },
+      "messages" : {
+        "type" : "array",
+        "description" : "Array of message objects with role and content",
+        "items" : {
+          "type" : "object",
+          "description" : "",
+          "properties" : {
+            "role" : {
+              "type" : "string",
+              "description" : "Message role: assistant, user, system, or tool"
+            },
+            "text" : {
+              "type" : "string",
+              "description" : "Text content"
+            },
+            "images" : {
+              "type" : "array",
+              "description" : "Images content",
+              "items" : {
+                "type" : "object",
+                "description" : "",
+                "properties" : {
+                  "url" : {
+                    "type" : "string",
+                    "description" : ""
+                  },
+                  "description" : {
+                    "type" : "string",
+                    "description" : ""
+                  },
+                  "mimeType" : {
+                    "type" : "string",
+                    "description" : ""
+                  }
+                },
+                "required" : [ "url" ]
+              }
+            },
+            "toolCalls" : {
+              "type" : "array",
+              "description" : "Optional tool calls made by this message",
+              "items" : {
+                "type" : "object",
+                "description" : "",
+                "properties" : {
+                  "id" : {
+                    "type" : "string",
+                    "description" : ""
+                  },
+                  "name" : {
+                    "type" : "string",
+                    "description" : ""
+                  },
+                  "arguments" : {
+                    "type" : "object",
+                    "description" : "Tool arguments as JSON object",
+                    "properties" : { },
+                    "required" : [ ]
+                  }
+                },
+                "required" : [ ]
+              }
+            }
+          },
+          "required" : [ "role" ]
+        }
+      },
+      "tools" : {
+        "type" : "array",
+        "description" : "Available tools for the LLM to use",
+        "items" : {
+          "type" : "object",
+          "description" : "",
+          "properties" : {
+            "name" : {
+              "type" : "string",
+              "description" : "Tool name"
+            },
+            "description" : {
+              "type" : "string",
+              "description" : "Tool description"
+            },
+            "parameters" : {
+              "type" : "object",
+              "description" : "Tool parameters as JSON Schema",
+              "properties" : { },
+              "required" : [ ]
+            }
+          },
+          "required" : [ "name" ]
+        }
+      },
+      "maxCompletionTokens" : {
+        "type" : "integer",
+        "description" : "Maximum number of tokens to generate in the completion"
+      },
+      "temperature" : {
+        "type" : "number",
+        "description" : "Sampling temperature (0-2.0), lower is more deterministic"
+      },
+      "topP" : {
+        "type" : "number",
+        "description" : "Nucleus sampling parameter (0-1.0)"
+      },
+      "responseFormat" : {
+        "type" : "object",
+        "description" : "JSON Schema for the response format",
+        "properties" : { },
+        "required" : [ ]
+      },
+      "chatId" : {
+        "type" : "string",
+        "description" : "Optional chat identifier"
+      }
+    },
+    "required" : [ "llmModelKey", "messages" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "LLM response",
+    "properties" : {
+      "text" : {
+        "type" : "string",
+        "description" : "Generated text response"
+      },
+      "toolCalls" : {
+        "type" : "array",
+        "description" : "Tool calls made by the LLM",
+        "items" : {
+          "type" : "object",
+          "properties" : {
+            "id" : {
+              "type" : "string",
+              "description" : "Tool call identifier"
+            },
+            "name" : {
+              "type" : "string",
+              "description" : "Tool name"
+            },
+            "arguments" : {
+              "type" : "object",
+              "description" : "Tool arguments as JSON object",
+              "properties" : { }
+            }
+          },
+          "required" : [ "id", "name" ]
+        }
+      },
+      "usage" : {
+        "type" : "object",
+        "description" : "Token usage statistics",
+        "properties" : {
+          "inputTokens" : {
+            "type" : "integer",
+            "description" : "Number of input tokens used"
+          },
+          "outputTokens" : {
+            "type" : "integer",
+            "description" : "Number of output tokens generated"
+          },
+          "totalTokens" : {
+            "type" : "integer",
+            "description" : "Total tokens used"
+          }
+        },
+        "required" : [ "inputTokens", "outputTokens", "totalTokens" ]
+      }
+    },
+    "required" : [ "usage" ]
+  }
+}

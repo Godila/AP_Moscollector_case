@@ -1,0 +1,27 @@
+{
+  "description" : "Retrieves the chat history in LLM-compatible format",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "array",
+    "description" : "Array of message objects with role and content",
+    "items" : {
+      "type" : "object",
+      "properties" : {
+        "role" : {
+          "type" : "string",
+          "description" : "Message role: 'user' or 'assistant'",
+          "enum" : [ "user", "assistant" ]
+        },
+        "content" : {
+          "type" : "string",
+          "description" : "The message content"
+        }
+      },
+      "required" : [ "role", "content" ]
+    }
+  }
+}

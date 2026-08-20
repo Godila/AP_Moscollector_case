@@ -1,0 +1,12 @@
+{
+  "description" : "Gets the channel type from the current request",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "string",
+    "description" : "The channel type"
+  }
+}

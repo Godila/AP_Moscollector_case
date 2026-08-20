@@ -1,0 +1,36 @@
+{
+  "description" : "Recognizes audio content using the specified ASR integration",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "asrIntegrationKey" : {
+        "type" : "string",
+        "description" : "Key identifying the ASR integration to use for recognition"
+      },
+      "audioUrl" : {
+        "type" : "string",
+        "description" : "URL to the audio file that needs to be recognized"
+      }
+    },
+    "required" : [ "asrIntegrationKey", "audioUrl" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Recognition result",
+    "properties" : {
+      "metadata" : {
+        "type" : "object",
+        "description" : "ASR metadata information"
+      },
+      "settings" : {
+        "type" : "object",
+        "description" : "ASR settings used for recognition"
+      },
+      "result" : {
+        "type" : "object",
+        "description" : "ASR recognition result data"
+      }
+    },
+    "required" : [ "metadata", "settings", "result" ]
+  }
+}

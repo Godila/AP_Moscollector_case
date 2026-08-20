@@ -1,0 +1,25 @@
+{
+  "description" : "Updates documents matching the filter",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "filters" : {
+        "type" : "object",
+        "description" : "Filter criteria",
+        "properties" : { },
+        "required" : [ ]
+      },
+      "operator" : {
+        "type" : "object",
+        "description" : "Update operator ($set, $inc, etc.)",
+        "properties" : { },
+        "required" : [ ]
+      }
+    },
+    "required" : [ "filters", "operator" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Operation result"
+  }
+}

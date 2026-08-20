@@ -1,0 +1,13 @@
+{
+  "description" : "Gets the result of the last call transfer. Returns SUCCESS, FAIL, TIMEOUT, or NOT_AVAILABLE if no transfer has been made yet.",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "string",
+    "description" : "Transfer result status",
+    "enum" : [ "SUCCESS", "FAIL", "TIMEOUT", "NOT_AVAILABLE" ]
+  }
+}

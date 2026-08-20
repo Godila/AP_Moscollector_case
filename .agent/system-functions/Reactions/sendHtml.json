@@ -1,0 +1,21 @@
+{
+  "description" : "Sends a message with HTML formatting",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "text" : {
+        "type" : "string",
+        "description" : "Plain text version of the message"
+      },
+      "html" : {
+        "type" : "string",
+        "description" : "HTML formatted version of the message"
+      }
+    },
+    "required" : [ "text", "html" ]
+  },
+  "output" : {
+    "type" : "null",
+    "description" : "No return value"
+  }
+}

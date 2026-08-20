@@ -1,0 +1,29 @@
+{
+  "description" : "Sends a voice message to a Telegram chat",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "credentialKey" : {
+        "type" : "string",
+        "description" : "The key to access the Telegram bot token credential"
+      },
+      "chatId" : {
+        "type" : "string",
+        "description" : "The chat ID to send the voice message to"
+      },
+      "voiceUrl" : {
+        "type" : "string",
+        "description" : "URL of the voice file to send"
+      },
+      "caption" : {
+        "type" : "string",
+        "description" : "Optional caption for the voice message (supports HTML formatting)"
+      }
+    },
+    "required" : [ "credentialKey", "chatId", "voiceUrl" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "The response from Telegram API"
+  }
+}

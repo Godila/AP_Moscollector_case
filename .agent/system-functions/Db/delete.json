@@ -1,0 +1,21 @@
+{
+  "description" : "Deletes a document by documentKey",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "dbIntegration" : {
+        "type" : "string",
+        "description" : ""
+      },
+      "documentKey" : {
+        "type" : "string",
+        "description" : "Document key"
+      }
+    },
+    "required" : [ "dbIntegration", "documentKey" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Operation result"
+  }
+}

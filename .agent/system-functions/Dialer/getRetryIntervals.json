@@ -1,0 +1,22 @@
+{
+  "description" : "Returns the durations of pauses between dial retry attempts. Returns null if not available",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Retry interval durations",
+    "properties" : {
+      "retryIntervalInMinutes" : {
+        "type" : "number",
+        "description" : "Pause between attempts in the current call series, planned via redial. Absent if no series was scheduled"
+      },
+      "campaignRetryIntervalInMinutes" : {
+        "type" : "number",
+        "description" : "Pause between dial attempts from the campaign settings"
+      }
+    }
+  }
+}

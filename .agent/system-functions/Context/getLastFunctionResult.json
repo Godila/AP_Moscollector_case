@@ -1,0 +1,12 @@
+{
+  "description" : "Gets the result of the previously executed function",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "The result of the last function call, can be any type or undefined"
+  }
+}

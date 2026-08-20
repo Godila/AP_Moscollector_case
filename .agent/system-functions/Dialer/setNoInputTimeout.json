@@ -1,0 +1,17 @@
+{
+  "description" : "Changes the timeout for waiting for a response from the client. Value is clamped to [100, 20000] ms",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "millis" : {
+        "type" : "number",
+        "description" : "Timeout in milliseconds for waiting for client input (clamped to 100-20000)"
+      }
+    },
+    "required" : [ "millis" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "No return value"
+  }
+}

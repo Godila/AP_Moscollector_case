@@ -1,0 +1,23 @@
+{
+  "description" : "Logs an error message",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "message" : {
+        "type" : "string",
+        "description" : "The message to log"
+      },
+      "data" : {
+        "type" : "object",
+        "description" : "Optional additional data to log",
+        "properties" : { },
+        "required" : [ ]
+      }
+    },
+    "required" : [ "message" ]
+  },
+  "output" : {
+    "type" : "null",
+    "description" : "No return value"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "description" : "Returns the conversation context back to the original project",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "state" : {
+        "type" : "string",
+        "description" : "The state to return to in the original project"
+      },
+      "customData" : {
+        "type" : "object",
+        "description" : "Custom data to pass back to the original project",
+        "properties" : { },
+        "required" : [ ]
+      }
+    },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "null",
+    "description" : "No return value"
+  }
+}

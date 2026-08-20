@@ -1,0 +1,29 @@
+{
+  "description" : "Sends an image by URL to a Telegram chat",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "credentialKey" : {
+        "type" : "string",
+        "description" : "The key to access the Telegram bot token credential"
+      },
+      "chatId" : {
+        "type" : "string",
+        "description" : "The chat ID to send the image to"
+      },
+      "imageUrl" : {
+        "type" : "string",
+        "description" : "URL of the image to send"
+      },
+      "caption" : {
+        "type" : "string",
+        "description" : "Optional caption for the image (supports HTML formatting)"
+      }
+    },
+    "required" : [ "credentialKey", "chatId", "imageUrl" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "The response from Telegram API"
+  }
+}

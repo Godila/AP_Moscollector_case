@@ -1,0 +1,39 @@
+---
+id: agent_xgenv
+name: Агент
+position:
+  x: 830
+  y: 152
+next-step: null
+next-error-step: null
+parameters:
+  llm-model-key: 1000156248-deepseek_deepseekv4p-ymw
+  llm-model-settings:
+    max-tokens: 4000
+    temperature: 0.6
+    top-p: 1.0
+    frequency-penalty: 0.0
+    presence-penalty: 0.0
+    verbose-mode: true
+    structured-output-enabled: false
+    structured-output-schema: null
+  system-promts:
+    role: тест
+    goal: тест
+    instructions: тест
+    query-override: ""
+  tools:
+  - function_rag_retrievechunks_vdott
+  - function_moscollector_test_fifqv
+  handoff-agents:
+    allowed-any: false
+    allowed-agent-node-ids: []
+  stay-in-agent: false
+  telephony-config: null
+  enable-context: true
+  chat-history-limit: 50
+  sequential-tool-calls-limit: 10
+  unique-tools-count-limit: 10
+  total-response-timeout:
+    timeout: 30
+    timeout-unit: SECOND

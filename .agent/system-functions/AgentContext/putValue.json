@@ -1,0 +1,27 @@
+{
+  "description" : "Stores a key-value pair in the context. Used to store objects different from text.",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "key" : {
+        "type" : "string",
+        "description" : "Key to store the value under"
+      },
+      "value" : {
+        "type" : "object",
+        "description" : "Value to store (any type)",
+        "properties" : { },
+        "required" : [ ]
+      },
+      "agentIds" : {
+        "type" : "string",
+        "description" : "Optional agent ID or list of agent IDs. If not provided, stores in common context"
+      }
+    },
+    "required" : [ "key", "value" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "No return value"
+  }
+}

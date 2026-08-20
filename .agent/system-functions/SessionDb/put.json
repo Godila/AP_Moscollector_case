@@ -1,0 +1,23 @@
+{
+  "description" : "Saves a document by documentKey (upsert operation)",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "documentKey" : {
+        "type" : "string",
+        "description" : "Document key"
+      },
+      "value" : {
+        "type" : "object",
+        "description" : "Document value to save",
+        "properties" : { },
+        "required" : [ ]
+      }
+    },
+    "required" : [ "documentKey", "value" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Operation result"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "description" : "Sends an audio file as a response",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "url" : {
+        "type" : "string",
+        "description" : "URL of the audio file"
+      },
+      "name" : {
+        "type" : "string",
+        "description" : "Name of the audio file"
+      }
+    },
+    "required" : [ "url" ]
+  },
+  "output" : {
+    "type" : "null",
+    "description" : "No return value"
+  }
+}

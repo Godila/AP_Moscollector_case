@@ -1,0 +1,12 @@
+{
+  "description" : "Returns the reason why an outgoing call was not connected. Returns null if not available",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "string",
+    "description" : "The reason the call was not connected (e.g. 'BUSY', 'NO_ANSWER', 'TECHNICAL_ERROR')"
+  }
+}

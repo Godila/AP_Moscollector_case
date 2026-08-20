@@ -1,0 +1,12 @@
+{
+  "description" : "Gets the account ID from the current request's bot ID",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "string",
+    "description" : "The account ID extracted from the bot ID"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "description" : "Counts documents matching the filter",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "filters" : {
+        "type" : "object",
+        "description" : "Filter criteria",
+        "properties" : { },
+        "required" : [ ]
+      }
+    },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "number",
+    "description" : "Number of matching documents"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "description" : "Sends a message with inline keyboard buttons to a Telegram chat",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "credentialKey" : {
+        "type" : "string",
+        "description" : "The key to access the Telegram bot token credential"
+      },
+      "chatId" : {
+        "type" : "string",
+        "description" : "The chat ID to send the message to"
+      },
+      "text" : {
+        "type" : "string",
+        "description" : "The text message to send (supports HTML formatting)"
+      },
+      "keyboard" : {
+        "type" : "array",
+        "description" : "Array of button rows, where each row is an array of button objects with 'text' and 'callback_data' properties",
+        "items" : {
+          "type" : "array",
+          "items" : {
+            "type" : "object",
+            "description" : "",
+            "properties" : {
+              "text" : {
+                "type" : "string",
+                "description" : "Button text to display"
+              },
+              "callback_data" : {
+                "type" : "string",
+                "description" : "Data to be sent when button is pressed"
+              },
+              "url" : {
+                "type" : "string",
+                "description" : "Optional URL to open when button is pressed"
+              }
+            },
+            "required" : [ "text" ]
+          }
+        }
+      }
+    },
+    "required" : [ "credentialKey", "chatId", "text", "keyboard" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "The response from Telegram API"
+  }
+}

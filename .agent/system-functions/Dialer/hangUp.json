@@ -1,0 +1,17 @@
+{
+  "description" : "Terminates the current call. On telephony channels sends a hangup reply, on other channels sends an optional text message",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "text" : {
+        "type" : "string",
+        "description" : "Optional text message to send when hanging up on non-telephony channels"
+      }
+    },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "No return value"
+  }
+}

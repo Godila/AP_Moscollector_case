@@ -1,0 +1,26 @@
+{
+  "description" : "Gets the client information from the current request",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Client information",
+    "properties" : {
+      "id" : {
+        "type" : "string",
+        "description" : "Client identifier"
+      },
+      "firstName" : {
+        "type" : "string",
+        "description" : "Client's first name"
+      },
+      "lastName" : {
+        "type" : "string",
+        "description" : "Client's last name"
+      }
+    }
+  }
+}

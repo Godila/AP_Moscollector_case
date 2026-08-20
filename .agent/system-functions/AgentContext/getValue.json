@@ -1,0 +1,20 @@
+{
+  "description" : "Retrieves a previously stored value",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "key" : {
+        "type" : "string",
+        "description" : "Key to retrieve"
+      },
+      "agentId" : {
+        "type" : "string",
+        "description" : "Optional agent ID. If provided, checks agent-specific context first, then common"
+      }
+    },
+    "required" : [ "key" ]
+  },
+  "output" : {
+    "description" : "Stored value or null if not found"
+  }
+}

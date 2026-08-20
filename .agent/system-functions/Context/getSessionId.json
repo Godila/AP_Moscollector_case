@@ -1,0 +1,12 @@
+{
+  "description" : "Gets the session ID from the current request",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "string",
+    "description" : "The session ID"
+  }
+}

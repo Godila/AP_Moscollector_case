@@ -1,0 +1,19 @@
+{
+  "description" : "Deletes multiple documents by filter",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "filters" : {
+        "type" : "object",
+        "description" : "Filter criteria for deletion",
+        "properties" : { },
+        "required" : [ ]
+      }
+    },
+    "required" : [ "filters" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Operation result"
+  }
+}

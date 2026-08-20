@@ -1,0 +1,29 @@
+{
+  "description" : "Sends an audio file to a Telegram chat",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "credentialKey" : {
+        "type" : "string",
+        "description" : "The key to access the Telegram bot token credential"
+      },
+      "chatId" : {
+        "type" : "string",
+        "description" : "The chat ID to send the audio to"
+      },
+      "audioUrl" : {
+        "type" : "string",
+        "description" : "URL of the audio file to send"
+      },
+      "caption" : {
+        "type" : "string",
+        "description" : "Optional caption for the audio (supports HTML formatting)"
+      }
+    },
+    "required" : [ "credentialKey", "chatId", "audioUrl" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "The response from Telegram API"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "description" : "Sends an email using the specified SMTP integration",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "smtpIntegration" : {
+        "type" : "string",
+        "description" : ""
+      },
+      "recipients" : {
+        "type" : "array",
+        "description" : "Email address(es) of the recipient(s)",
+        "items" : {
+          "type" : "string",
+          "description" : ""
+        }
+      },
+      "subject" : {
+        "type" : "string",
+        "description" : "Email subject line"
+      },
+      "content" : {
+        "type" : "string",
+        "description" : "Email body content (HTML supported)"
+      }
+    },
+    "required" : [ "smtpIntegration", "recipients", "subject", "content" ]
+  },
+  "output" : {
+    "type" : "object",
+    "properties" : {
+      "status" : {
+        "type" : "string",
+        "enum" : [ "OK", "UNABLE_TO_CONNECT", "INVALID_REQUEST", "INTERNAL_ERROR" ],
+        "description" : "Status of the email sending operation"
+      }
+    },
+    "required" : [ "status" ],
+    "description" : "Result of the email sending operation"
+  }
+}

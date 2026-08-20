@@ -1,0 +1,59 @@
+{
+  "description" : "Gets the content of the message from the current request",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Message content details",
+    "properties" : {
+      "text" : {
+        "type" : "string",
+        "description" : "The message text"
+      },
+      "files" : {
+        "type" : "array",
+        "description" : "Files attached to the message",
+        "items" : {
+          "type" : "object",
+          "properties" : {
+            "url" : {
+              "type" : "string",
+              "description" : "File URL"
+            },
+            "type" : {
+              "type" : "string",
+              "description" : "File type"
+            },
+            "mimeType" : {
+              "type" : "string",
+              "description" : "MIME type"
+            },
+            "name" : {
+              "type" : "string",
+              "description" : "File name"
+            },
+            "size" : {
+              "type" : "number",
+              "description" : "File size"
+            },
+            "message" : {
+              "type" : "string",
+              "description" : "File message"
+            }
+          }
+        }
+      },
+      "event" : {
+        "type" : "string",
+        "description" : "The event type"
+      },
+      "eventData" : {
+        "type" : "object",
+        "description" : "Additional event data"
+      }
+    }
+  }
+}

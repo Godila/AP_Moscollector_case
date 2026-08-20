@@ -1,0 +1,27 @@
+{
+  "description" : "Switches the conversation context to another project.",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "botId" : {
+        "type" : "string",
+        "description" : "The target bot ID to switch the conversation to"
+      },
+      "state" : {
+        "type" : "string",
+        "description" : "The initial state to enter in the target bot"
+      },
+      "customData" : {
+        "type" : "object",
+        "description" : "Custom data to pass to the target bot",
+        "properties" : { },
+        "required" : [ ]
+      }
+    },
+    "required" : [ "botId" ]
+  },
+  "output" : {
+    "type" : "null",
+    "description" : "No return value"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "description" : "Sends a file as a response",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "url" : {
+        "type" : "string",
+        "description" : "URL of the file"
+      },
+      "name" : {
+        "type" : "string",
+        "description" : "Name of the file"
+      }
+    },
+    "required" : [ "url" ]
+  },
+  "output" : {
+    "type" : "null",
+    "description" : "No return value"
+  }
+}

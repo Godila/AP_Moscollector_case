@@ -1,0 +1,45 @@
+{
+  "description" : "Retrieves the chat history for the current account",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "array",
+    "description" : "List of chat history messages",
+    "items" : {
+      "type" : "object",
+      "description" : "ChatHistoryMessage",
+      "properties" : {
+        "questionId" : {
+          "type" : "string",
+          "description" : "The question ID"
+        },
+        "text" : {
+          "type" : "string",
+          "description" : "The message text"
+        },
+        "author" : {
+          "type" : "string",
+          "description" : "The author of the message",
+          "enum" : [ "BOT", "CLIENT", "OPERATOR", "SYSTEM" ]
+        },
+        "status" : {
+          "type" : "string",
+          "description" : "Status of the message",
+          "enum" : [ "SENT", "DELIVERED", "READ", "NOT_SENT", "NOT_DELIVERED" ]
+        },
+        "eventData" : {
+          "type" : "object",
+          "description" : "Event data associated with the message"
+        },
+        "timestamp" : {
+          "type" : "number",
+          "description" : "Timestamp of the message (previously sendDateInUTC)"
+        }
+      },
+      "required" : [ "author", "questionId", "timestamp" ]
+    }
+  }
+}

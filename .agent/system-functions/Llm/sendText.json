@@ -1,0 +1,21 @@
+{
+  "description" : "Sends a simple text message to the LLM and returns the response content",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "llmModelKey" : {
+        "type" : "string",
+        "description" : "The credential key for the LLM model"
+      },
+      "text" : {
+        "type" : "string",
+        "description" : "The text content to send to the LLM"
+      }
+    },
+    "required" : [ "llmModelKey", "text" ]
+  },
+  "output" : {
+    "type" : "string",
+    "description" : "The response content from the LLM"
+  }
+}

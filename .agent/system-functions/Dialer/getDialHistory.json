@@ -1,0 +1,31 @@
+{
+  "description" : "Returns the history of completed and available dial attempts for the current number. Returns null if not available",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Dial attempt counters",
+    "properties" : {
+      "completedAttempts" : {
+        "type" : "number",
+        "description" : "Number of completed dial attempts across all numbers in the campaign"
+      },
+      "availableAttempts" : {
+        "type" : "number",
+        "description" : "Number of remaining dial attempts across all numbers in the campaign"
+      },
+      "completedAttemptsToPhone" : {
+        "type" : "number",
+        "description" : "Number of completed dial attempts to the current phone number"
+      },
+      "availableAttemptsToPhone" : {
+        "type" : "number",
+        "description" : "Number of remaining dial attempts to the current phone number"
+      }
+    },
+    "required" : [ "completedAttempts", "availableAttempts", "completedAttemptsToPhone", "availableAttemptsToPhone" ]
+  }
+}

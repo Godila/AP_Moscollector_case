@@ -1,0 +1,12 @@
+{
+  "description" : "Checks whether the current call is incoming or outgoing. A call is incoming if there is no outgoing call ID",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "boolean",
+    "description" : "True if the call is incoming, false if outgoing"
+  }
+}

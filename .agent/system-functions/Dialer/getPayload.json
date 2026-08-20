@@ -1,0 +1,13 @@
+{
+  "description" : "Returns the payload data associated with the dialed number. Returns an empty object if not available",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "The payload data for the current number",
+    "properties" : { }
+  }
+}

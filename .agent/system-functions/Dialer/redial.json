@@ -1,0 +1,57 @@
+{
+  "description" : "Schedules a new series of retry attempts to dial the number. Requires startDateTime or localTimeFrom at least",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "startDateTime" : {
+        "type" : "string",
+        "description" : "The earliest date/time to start redialing",
+        "format" : "date-time"
+      },
+      "finishDateTime" : {
+        "type" : "string",
+        "description" : "The latest date/time to attempt redialing",
+        "format" : "date-time"
+      },
+      "allowedDays" : {
+        "type" : "array",
+        "description" : "Days allowed for redialing",
+        "items" : {
+          "type" : "string",
+          "description" : ""
+        }
+      },
+      "localTimeFrom" : {
+        "type" : "string",
+        "description" : "Local time from in HH:MM format"
+      },
+      "localTimeTo" : {
+        "type" : "string",
+        "description" : "Local time to in HH:MM format"
+      },
+      "retryIntervalInMinutes" : {
+        "type" : "number",
+        "description" : "Interval between retries in minutes (min 1)"
+      },
+      "maxAttempts" : {
+        "type" : "number",
+        "description" : "Max number of retry attempts (1-50)"
+      },
+      "allowedTime" : {
+        "type" : "object",
+        "description" : "Allowed time windows per day of week (keys: mon/tue/wed/thu/fri/sat/sun/default)",
+        "properties" : { },
+        "required" : [ ]
+      },
+      "dialerPriority" : {
+        "type" : "number",
+        "description" : "Dialer priority (1-5)"
+      }
+    },
+    "required" : [ "startDateTime", "allowedTime" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "No return value"
+  }
+}

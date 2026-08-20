@@ -1,0 +1,21 @@
+{
+  "description" : "Sends an image as a response",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "url" : {
+        "type" : "string",
+        "description" : "URL of the image"
+      },
+      "name" : {
+        "type" : "string",
+        "description" : "Name of the image file"
+      }
+    },
+    "required" : [ "url" ]
+  },
+  "output" : {
+    "type" : "null",
+    "description" : "No return value"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "description" : "Retrieves relevant chunks from a RAG integration based on a query",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "ragIntegration" : {
+        "type" : "string",
+        "description" : ""
+      },
+      "query" : {
+        "type" : "string",
+        "description" : "The search query text"
+      },
+      "historyMessageLimit" : {
+        "type" : "integer",
+        "description" : "The maximum number of recent messages from the dialogue history."
+      }
+    },
+    "required" : [ "ragIntegration", "query" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Response containing retrieved chunks",
+    "properties" : {
+      "chunks" : {
+        "type" : "array",
+        "description" : "List of chunks sorted in descending order of relevance score",
+        "items" : {
+          "type" : "object",
+          "properties" : {
+            "score" : {
+              "type" : "number",
+              "description" : "Relevance score of the chunk to the user query"
+            },
+            "content" : {
+              "type" : "string",
+              "description" : "Text content of the chunk"
+            },
+            "source" : {
+              "type" : "object",
+              "description" : "Brief information about the source document",
+              "properties" : {
+                "id" : {
+                  "type" : "integer",
+                  "description" : "Source identifier"
+                },
+                "path" : {
+                  "type" : "string",
+                  "description" : "Name of the source in the knowledge base"
+                },
+                "externalLink" : {
+                  "type" : "string",
+                  "description" : "Link to the source"
+                }
+              },
+              "required" : [ "id", "path" ]
+            }
+          },
+          "required" : [ "score", "content", "source" ]
+        }
+      }
+    },
+    "required" : [ "chunks" ]
+  }
+}

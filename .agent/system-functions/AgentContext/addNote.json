@@ -1,0 +1,21 @@
+{
+  "description" : "Adds a text fragment to the context. Empty strings are ignored.",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "text" : {
+        "type" : "string",
+        "description" : "Text to add"
+      },
+      "agentId" : {
+        "type" : "string",
+        "description" : "Optional agent ID. If not provided, adds to common context"
+      }
+    },
+    "required" : [ "text" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "No return value"
+  }
+}

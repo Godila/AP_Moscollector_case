@@ -1,0 +1,27 @@
+{
+  "description" : "Calls external project by chat api token and optional custom data",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "token" : {
+        "type" : "string",
+        "description" : "Chat api token"
+      },
+      "query" : {
+        "type" : "string",
+        "description" : "Text query to send in the request"
+      },
+      "customData" : {
+        "type" : "object",
+        "description" : "Optional custom data to send in the request",
+        "properties" : { },
+        "required" : [ ]
+      }
+    },
+    "required" : [ "token", "query" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Response body from the called project chat api"
+  }
+}

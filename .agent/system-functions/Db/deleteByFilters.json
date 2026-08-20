@@ -1,0 +1,23 @@
+{
+  "description" : "Deletes multiple documents by filter",
+  "input" : {
+    "type" : "object",
+    "properties" : {
+      "dbIntegration" : {
+        "type" : "string",
+        "description" : ""
+      },
+      "filters" : {
+        "type" : "object",
+        "description" : "Filter criteria for deletion",
+        "properties" : { },
+        "required" : [ ]
+      }
+    },
+    "required" : [ "dbIntegration", "filters" ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "Operation result"
+  }
+}

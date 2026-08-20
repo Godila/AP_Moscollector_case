@@ -1,0 +1,27 @@
+{
+  "description" : "Returns the schedule of the dialing campaign. Returns null if not available",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "object",
+    "description" : "The campaign schedule object",
+    "properties" : {
+      "allowedDays" : {
+        "type" : "array",
+        "description" : "Days of the week allowed for dialing",
+        "items" : {
+          "type" : "string",
+          "enum" : [ "mon", "tue", "wed", "thu", "fri", "sat", "sun" ]
+        }
+      },
+      "allowedTime" : {
+        "type" : "object",
+        "description" : "Allowed time windows per day of week",
+        "properties" : { }
+      }
+    }
+  }
+}

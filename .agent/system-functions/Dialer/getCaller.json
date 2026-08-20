@@ -1,0 +1,12 @@
+{
+  "description" : "Returns the phone number of the client. Returns null if rawRequest is not available",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "string",
+    "description" : "The client's phone number or null"
+  }
+}

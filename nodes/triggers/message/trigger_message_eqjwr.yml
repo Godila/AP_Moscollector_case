@@ -1,0 +1,10 @@
+---
+id: trigger_message_eqjwr
+name: Сообщение
+position:
+  x: 421
+  y: 147
+next-step: agent_xgenv
+next-error-step: null
+parameters:
+  placeholder: null

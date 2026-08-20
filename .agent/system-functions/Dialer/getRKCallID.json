@@ -1,0 +1,12 @@
+{
+  "description" : "Returns the identifier of the outgoing call. Returns null if not on a resterisk channel",
+  "input" : {
+    "type" : "object",
+    "properties" : { },
+    "required" : [ ]
+  },
+  "output" : {
+    "type" : "string",
+    "description" : "The outgoing call identifier"
+  }
+}
