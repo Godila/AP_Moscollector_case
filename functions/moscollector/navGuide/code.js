@@ -124,12 +124,7 @@ function findScenario(scenarios, request) {
   });
 
   if (!best || bestScore < MIN_SCORE) {
-    return {
-      status: "not_found",
-      suggestions: scenarios.slice(0, 5).map(function (scenario) {
-        return scenario.service + " - " + scenario.section;
-      })
-    };
+    return { status: "not_found" };
   }
 
   return { status: "found", scenario: best, score: bestScore };
@@ -150,7 +145,19 @@ async function run(query, dbKey) {
 
   var result = findScenario(found.scenarios, query);
   if (result.status !== "found") {
-    return { found: false, reason: "not_found", request: query, suggestions: result.suggestions };
+    // "Не нашлось" здесь означает только одно: готового сценария в справочнике
+    // нет. Ответ при этом вполне может быть в базе знаний - руководства
+    // по системам лежат там. Раньше агент на этом останавливался и отправлял
+    // сотрудника к руководителю, имея нужный документ под рукой.
+    return {
+      found: false,
+      reason: "not_found",
+      request: query,
+      tryNext: "searchRegulations",
+      hint: "Готового сценария в справочнике нет. Это не значит, что ответа нет: " +
+        "поищи в базе знаний через searchRegulations, руководства по системам лежат там. " +
+        "Состав справочника сотруднику не перечисляй."
+    };
   }
 
   return {
