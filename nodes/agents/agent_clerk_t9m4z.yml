@@ -162,7 +162,7 @@ parameters:
   stay-in-agent: true
   telephony-config: null
   enable-context: true
-  chat-history-limit: 20
+  chat-history-limit: 10
   sequential-tool-calls-limit: 8
   unique-tools-count-limit: 4
   total-response-timeout:
