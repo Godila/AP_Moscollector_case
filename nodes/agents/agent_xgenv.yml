@@ -177,5 +177,5 @@ parameters:
   sequential-tool-calls-limit: 8
   unique-tools-count-limit: 4
   total-response-timeout:
-    timeout: 45
+    timeout: 90
     timeout-unit: SECOND
