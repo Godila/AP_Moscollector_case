@@ -668,12 +668,30 @@ async function run(name, text) {
 
   await Log.info({ message: "Документ загружен", data: { fileName: fileName, url: url } });
 
-  // Реакция отправляет файл в канал сразу, ссылка в ответе нужна агенту,
-  // чтобы он мог назвать её текстом. Подтверждение на узле не включаем:
-  // из функции с hitl-tool-config реакции до канала могут не дойти.
-  await Reactions.sendFile({ url: url, name: fileName });
+  // Доставка в канал идёт двумя путями, и это не перестраховка.
+  //
+  // sendFile отдаёт каналу ссылку, а не содержимое: карточку документа рисует
+  // сам канал. В тестовом виджете это работает, в Telegram файл до получателя
+  // не дошёл, и в Chat API реплики от этой реакции тоже не видно. Поэтому
+  // сначала пробуем файл, а следом отправляем голую ссылку отдельной репликой:
+  // её мессенджер сделает кликабельной в любом случае.
+  //
+  // Ошибку доставки файла глотаем намеренно: документ уже загружен, и терять
+  // из-за неё ссылку было бы обиднее всего.
+  var fileDelivered = true;
+  try {
+    await Reactions.sendFile({ url: url, name: fileName });
+  } catch (error) {
+    fileDelivered = false;
+    await Log.warn({
+      message: "Канал не принял файл, остаётся ссылка",
+      data: { fileName: fileName, error: String(error && error.message ? error.message : error) }
+    });
+  }
 
-  return { ok: true, url: url, name: fileName };
+  await Reactions.sendText({ text: url });
+
+  return { ok: true, url: url, name: fileName, fileDelivered: fileDelivered };
 }
 
 if (typeof module !== "undefined" && module.exports) {
