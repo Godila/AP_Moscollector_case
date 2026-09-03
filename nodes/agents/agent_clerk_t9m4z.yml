@@ -2,7 +2,7 @@
 id: agent_clerk_t9m4z
 name: Делопроизводитель
 position:
-  x: 1980
+  x: 1752
   y: 152
 next-step: null
 next-error-step: null
@@ -161,7 +161,7 @@ parameters:
          сверхконфиденциальные сведения и не принимай их в переписке. Если
          сотрудник прислал такое сам, не повторяй эти данные ни в ответе,
          ни в тексте заявки.
-    query-override: ""
+    query-override: null
   tools:
   - function_moscollector_draftmemo_q8w3r
   - function_moscollector_helpdeskcreate_j6p1x
