@@ -179,3 +179,4 @@ parameters:
   total-response-timeout:
     timeout: 90
     timeout-unit: SECOND
+  prompt-expert-mode: null

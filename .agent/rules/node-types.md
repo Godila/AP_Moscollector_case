@@ -25,6 +25,7 @@ An LLM-powered agent node that can use tools and hand off to other agents.
  `parameters.handoff-agents` | handoffagents | no | Configuration for agent handoff (transfer to other agents) |  |
  `parameters.llm-model-key` | string | no | Key of the LLM model to use | openai-gpt4 |
  `parameters.llm-model-settings` | agentllmsettings | no | LLM generation settings (temperature, maxTokens, etc.) |  |
+ `parameters.prompt-expert-mode` | agentpromptexpertmode | no | Manual control over the system prompt and the engine's built-in agent tools |  |
  `parameters.sequential-tool-calls-limit` | number | yes | Maximum number of sequential tool calls before forcing a response | 10 |
  `parameters.stay-in-agent` | boolean | yes | Whether to keep conversation within this agent after tool execution |  |
  `parameters.system-promts` | agentsystempromts | no | System prompts configuration for the agent |  |
